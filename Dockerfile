@@ -12,28 +12,36 @@ RUN curl -sL https://debian.datastax.com/debian/repo_key | apt-key add -
 RUN apt-get -y update && apt-get -y -o Dpkg::Options::='--force-confold' dist-upgrade
 RUN apt-get -y install curl libjna-java python wget jq datastax-agent sysstat python-pip supervisor && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-#Needed for transferring snapshots
+# Needed for transferring snapshots
 RUN pip install awscli
 
-ENV CASSIE_VERSION=2.1.11
+ENV CASSIE_VERSION=2.2.4
 ADD http://ftp.halifax.rwth-aachen.de/apache/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
-# COPY apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
+RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
+RUN md5sum --check /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 
 RUN tar -xzf /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz -C /opt && ln -s /opt/apache-cassandra-${CASSIE_VERSION} /opt/cassandra
-RUN rm -f /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz
+RUN rm -f /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz*
 
 RUN mkdir -p /var/cassandra/data
 RUN mkdir -p /opt/jolokia/
 
 ADD http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.3.1/jolokia-jvm-1.3.1-agent.jar /opt/jolokia/jolokia-jvm-agent.jar
+RUN echo "ca7c3eab12c8c3c5227d6fb4e51984bc /opt/jolokia/jolokia-jvm-agent.jar" > /tmp/jolokia-jvm-agent.jar.md5
+RUN md5sum --check /tmp/jolokia-jvm-agent.jar.md5
+RUN rm -f /tmp/jolokia-jvm-agent.jar.md5
+
 ADD cassandra_template.yaml /opt/cassandra/conf/
-#Slightly modified in order to run jolokia
+# Slightly modified in order to run jolokia
 ADD cassandra-env.sh /opt/cassandra/conf/
 
 RUN rm -f /opt/cassandra/conf/cassandra.yaml && chmod 0777 /opt/cassandra/conf/
 RUN ln -s /opt/cassandra/bin/nodetool /usr/bin && ln -s /opt/cassandra/bin/cqlsh /usr/bin
 
 ADD https://bintray.com/artifact/download/lmineiro/maven/cassandra-etcd-seed-provider-1.0.jar /opt/cassandra/lib/
+RUN echo "37367e314fdc822f7c982f723336f07e /opt/cassandra/lib/cassandra-etcd-seed-provider-1.0.jar" > /tmp/cassandra-etcd-seed-provider-1.0.jar.md5
+RUN md5sum --check /tmp/cassandra-etcd-seed-provider-1.0.jar.md5
+RUN rm -f /tmp/cassandra-etcd-seed-provider-1.0.jar.md5
 
 COPY cassandraSnapshotter.sh /opt/cassandra/bin/cassandraSnapshotter.sh
 COPY snapshotScheduler.sh /opt/cassandra/bin/snapshotScheduler.sh
