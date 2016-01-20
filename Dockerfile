@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://debian.datastax.com/community stable main" | tee -a /etc/apt/sources.list.d/datastax.community.list
 RUN curl -sL https://debian.datastax.com/debian/repo_key | apt-key add -
 RUN apt-get -y update && apt-get -y -o Dpkg::Options::='--force-confold' dist-upgrade
-RUN apt-get -y install curl libjna-java python wget jq datastax-agent sysstat python-pip supervisor && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get -y install curl python wget jq datastax-agent sysstat python-pip supervisor && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Needed for transferring snapshots
 RUN pip install awscli
