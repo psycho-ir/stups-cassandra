@@ -178,8 +178,6 @@ JVM_OPTS="$JVM_OPTS -javaagent:$CASSANDRA_HOME/lib/jamm-0.3.0.jar"
 # add jolokia java agent
 
 # disable JNA
-JVM_OPTS="$JVM_OPTS -Djna.nosys=true"
-
 JVM_OPTS="$JVM_OPTS -javaagent:/opt/jolokia/jolokia-jvm-agent.jar=port=8778,host=$LISTEN_ADDRESS"
 
 
