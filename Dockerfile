@@ -34,6 +34,8 @@ RUN rm -f /tmp/jolokia-jvm-agent.jar.md5
 ADD conf/cassandra_template.yaml /opt/cassandra/conf/
 # Slightly modified in order to run jolokia
 ADD conf/cassandra-env.sh /opt/cassandra/conf/
+# Slightly modified in order to avoid spamming the logs
+ADD conf/logback.xml /opt/cassandra/conf/
 
 RUN rm -f /opt/cassandra/conf/cassandra.yaml && chmod 0777 /opt/cassandra/conf/
 RUN ln -s /opt/cassandra/bin/nodetool /usr/bin && ln -s /opt/cassandra/bin/cqlsh /usr/bin
