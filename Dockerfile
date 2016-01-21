@@ -31,11 +31,9 @@ RUN echo "ca7c3eab12c8c3c5227d6fb4e51984bc /opt/jolokia/jolokia-jvm-agent.jar" >
 RUN md5sum --check /tmp/jolokia-jvm-agent.jar.md5
 RUN rm -f /tmp/jolokia-jvm-agent.jar.md5
 
-ADD conf/cassandra_template.yaml /opt/cassandra/conf/
+ADD cassandra_template.yaml /opt/cassandra/conf/
 # Slightly modified in order to run jolokia
-ADD conf/cassandra-env.sh /opt/cassandra/conf/
-# Slightly modified in order to avoid spamming the logs
-ADD conf/logback.xml /opt/cassandra/conf/
+ADD cassandra-env.sh /opt/cassandra/conf/
 
 RUN rm -f /opt/cassandra/conf/cassandra.yaml && chmod 0777 /opt/cassandra/conf/
 RUN ln -s /opt/cassandra/bin/nodetool /usr/bin && ln -s /opt/cassandra/bin/cqlsh /usr/bin
@@ -54,6 +52,6 @@ COPY stups-cassandra.sh /opt/cassandra/bin/
 RUN mkdir -p /var/log/supervisor && chmod 0777 /var/log/supervisor
 RUN touch /var/log/snapshot_cron.log && chmod 0777 /var/log/snapshot_cron.log
 
-COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 CMD ["/usr/bin/supervisord"]

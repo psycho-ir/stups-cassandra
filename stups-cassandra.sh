@@ -9,8 +9,6 @@
 NEEDED_SEEDS=$((CLUSTER_SIZE > 3 ? 3 : 1))
 TTL=${TTL:-30}
 
-ulimit -l unlimited
-
 if [ -z "$ETCD_URL" ] ;
 then
     echo "etcd URL is not defined."
