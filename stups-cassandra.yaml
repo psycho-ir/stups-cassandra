@@ -18,9 +18,6 @@ SenzaInfo:
     - ApplicationId:
         Description: "The application id according to yourturn"
         Default: "stups-cassandra"
-    - BackupBucket:
-        Description: "Your S3 Backup Bucket where your snapshots will be stored"
-        Default: ""
 
 SenzaComponents:
 
@@ -76,7 +73,6 @@ SenzaComponents:
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
           TTL: 120
-          BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
 
 
@@ -114,31 +110,3 @@ Resources:
         FromPort: 22
         ToPort: 22
         CidrIp: 0.0.0.0/0
-
-  # Automatically create roles.
-  StupsCassandraRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-      - PolicyName: CassandraSnapshotWrite
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: Allow
-            Action: "s3:PutObject"
-            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"] 
-      - PolicyName: CassandraSnapshotListBucket
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: Allow
-            Action: "s3:ListBucket"
-            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}"] 
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: ec2.amazonaws.com
-          Action: sts:AssumeRole
-      Path: /
