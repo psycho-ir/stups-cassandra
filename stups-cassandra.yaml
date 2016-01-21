@@ -31,8 +31,6 @@ SenzaComponents:
         - Fn::GetAtt:
           - StupsCassandraSg
           - GroupId
-      IamRoles:
-        - Ref: StupsCassandraRole
       AutoScaling:
         Minimum: "{{Arguments.ClusterSize}}"
         Maximum: "{{Arguments.ClusterSize}}"
