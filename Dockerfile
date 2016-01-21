@@ -43,8 +43,8 @@ RUN echo "37367e314fdc822f7c982f723336f07e /opt/cassandra/lib/cassandra-etcd-see
 RUN md5sum --check /tmp/cassandra-etcd-seed-provider-1.0.jar.md5
 RUN rm -f /tmp/cassandra-etcd-seed-provider-1.0.jar.md5
 
-COPY cassandraSnapshotter.sh /opt/cassandra/bin/cassandraSnapshotter.sh
-COPY snapshotScheduler.sh /opt/cassandra/bin/snapshotScheduler.sh
+COPY cassandra-snapshotter.sh /opt/cassandra/bin/cassandra-snapshotter.sh
+COPY snapshot-scheduler.sh /opt/cassandra/bin/snapshot-scheduler.sh
 
 COPY stups-cassandra.sh /opt/cassandra/bin/
 

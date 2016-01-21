@@ -18,7 +18,7 @@ while [ -n "$BACKUP_BUCKET" ] ; do
                                 for i in "${KEYSPACES[@]}"
                                         do
                                         echo "Executing snapshot"
-                                        flock -x -n /opt/cassandra/bin/cassandraSnapshotter.sh backup $i $BACKUP_BUCKET >> /var/log/snapshot_cron.log
+                                        flock -x -n /var/lock/cassandraSnapshotter.lock /opt/cassandra/bin/cassandra-snapshotter.sh backup $i $BACKUP_BUCKET >> /var/log/snapshot_cron.log
                                         done
                                 fi
                         fi

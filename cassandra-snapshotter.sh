@@ -4,12 +4,10 @@
 backupFolder=$/var/cassandra/data/$keySpaceName/
 DATE=`date +%Y-%m-%d:%H:%M:%S`
 IP=$(curl -Ls -m 4 http://169.254.169.254/latest/meta-data/local-ipv4)
-CASSANDRA_HOME=/opt/cassandra
 
 commando=$1
 keySpaceName=$2
 bucket=$3
-fileName=$4
 
 if [ "$commando" == "help" ]; then
 	echo "### Cassandra Snapshotter"
