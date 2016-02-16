@@ -1,4 +1,5 @@
-cript to refresh the ttl for seeds, or add current node as seed if seeds are missing
+#!/bin/bash
+# Script to refresh the ttl for seeds, or add current node as seed if seeds are missing
 # Maintainer: sorin.stirbu@zalando.de
 # ETCD_URL
 # CLUSTER_NAME
