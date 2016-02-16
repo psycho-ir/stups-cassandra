@@ -40,10 +40,11 @@ SenzaComponents:
         root: true
         runtime: Docker
         networking: host
-        source: "registry.opensource.zalan.do/mop/stups-cassandra:{{Arguments.ImageVersion}}"
+        source: "pierone.stups.zalan.do/octopus/cassandra:{{Arguments.ImageVersion}}"
         application_id: "{{Arguments.ApplicationId}}"
         etcd_discovery_domain: "{{Arguments.EtcdDomain}}"
         scalyr_account_key: "{{Arguments.ScalyrKey}}"
+        mint_bucket: "zalando-stups-mint-268094141749-eu-west-1"
         # http://docs.datastax.com/en/opscenter/5.0/opsc/reference/opscPorts_r.html
         ports:
           7000: 7000
@@ -110,17 +111,10 @@ Resources:
         ToPort: 22
         CidrIp: 0.0.0.0/0
 
-   StupsCassandraRole:
+  StupsCassandraRole:
       Type: AWS::IAM::Role
       Properties:
         Policies:
-        - PolicyName: CassandraSnapshotWrite
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-            - Effect: Allow
-              Action: "s3:PutObject"
-              Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"]
         - PolicyName: CassandraMintRead
           PolicyDocument:
               Version: "2012-10-17"
@@ -128,13 +122,7 @@ Resources:
               - Effect: Allow
                 Action: "s3:GetObject"
                 Resource: ["arn:aws:s3:::zalando-stups-mint-268094141749-eu-west-1/cassandra/*"]
-        - PolicyName: CassandraSnapshotListBucket
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-            - Effect: Allow
-              Action: "s3:ListBucket"
-              Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}"]
+
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
