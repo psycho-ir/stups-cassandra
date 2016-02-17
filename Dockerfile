@@ -47,7 +47,7 @@ COPY cassandra-snapshotter.sh /opt/cassandra/bin/cassandra-snapshotter.sh
 COPY snapshot-scheduler.sh /opt/cassandra/bin/snapshot-scheduler.sh
 COPY seed-heartbeat.sh /opt/cassandra/bin/seed-heartbeat.sh
 
-RUN chmod 0777 /opt/cassandra/bin/cassandra-snapshotter.sh && chmod 0777  /opt/cassandra/bin/snapshot-scheduler.sh && chmod 0777 /opt/cassandra/bin/seed-heartbeat.sh
+RUN chmod 0777 /opt/cassandra/bin/cassandra-snapshotter.sh && chmod 0777  /opt/cassandra/bin/snapshot-scheduler.sh && chmod 0777 /opt/cassandra/bin/seed-heartbeat.sh && chmod 0777 /opt/cassandra/conf/cassandra-env.sh
 
 COPY stups-cassandra.sh /opt/cassandra/bin/
 
