@@ -50,7 +50,7 @@ while true ; do
        if [ -n "$SEED_ADDR" ] ;
        then
                curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                   -XPUT -d ttl=${TTL} > /dev/null
+                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" > /dev/null
        fi
 
        # check if missing seeds 
