@@ -15,7 +15,7 @@ SenzaInfo:
         Default: ""
     - ScalyrKey:
         Description: "The API key of Scalyr logging service used by Taupage"
-        Default: "0nQOAOXXJVu3kEtxP5AnMUb5eNh_M/W4WBvf7mx43siI-"
+        Default: ""
     - ApplicationId:
         Description: "The application id according to yourturn"
         Default: "cassandra"
