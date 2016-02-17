@@ -26,6 +26,9 @@ SenzaInfo:
     - Recovery:
         Description: "If cassandra cluster shall recover from snapshot"
         Default: "1"
+    - TTL:
+        Description: "Lock TTL"
+        Default: 30
 
 SenzaComponents:
 
@@ -81,7 +84,7 @@ SenzaComponents:
           CLUSTER_NAME: "{{SenzaInfo.StackVersion}}"
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
-          TTL: 120
+          TTL: "{{Arguments.TTL}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
 
 
