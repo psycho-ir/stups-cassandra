@@ -3,7 +3,7 @@ SenzaInfo:
   Parameters:
     - EtcdDomain:
         Description: "Your etcd domain (e.g. etcd.cassandra.rocks.org)"
-        Default: cassandra.octopus.zalan.do
+        Default: release.octopus.zalan.do
     - ClusterSize:
         Description: "The initial size (number of nodes) for the new Cassandra cluster"
         Default: "3"
@@ -15,10 +15,17 @@ SenzaInfo:
         Default: ""
     - ScalyrKey:
         Description: "The API key of Scalyr logging service used by Taupage"
-        Default: 0nQOAOXXJVu3kEtxP5AnMUb5eNh_M/W4WBvf7mx43siI-
+        Default: ""
     - ApplicationId:
         Description: "The application id according to yourturn"
         Default: "cassandra"
+
+    - BackupBucket:
+        Description: "Your S3 Backup Bucket where your snapshots will be stored"
+        Default: "cassandra-stest-backup"
+    - Recovery:
+        Description: "If cassandra cluster shall recover from snapshot"
+        Default: "1"
 
 SenzaComponents:
 
@@ -32,6 +39,8 @@ SenzaComponents:
         - Fn::GetAtt:
           - StupsCassandraSg
           - GroupId
+      IamRoles:
+        - Ref: StupsCassandraRole
       AutoScaling:
         Minimum: "{{Arguments.ClusterSize}}"
         Maximum: "{{Arguments.ClusterSize}}"
@@ -111,23 +120,51 @@ Resources:
         ToPort: 22
         CidrIp: 0.0.0.0/0
 
+  # Automatically create roles.
   StupsCassandraRole:
-      Type: AWS::IAM::Role
-      Properties:
-        Policies:
-        - PolicyName: CassandraMintRead
-          PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-              - Effect: Allow
-                Action: "s3:GetObject"
-                Resource: ["arn:aws:s3:::zalando-stups-mint-268094141749-eu-west-1/cassandra/*"]
-
-        AssumeRolePolicyDocument:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+      - PolicyName: CassandraSnapshotWrite
+        PolicyDocument:
           Version: "2012-10-17"
           Statement:
           - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-        Path: /
+            Action: "s3:PutObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"]
+      - PolicyName: CassandraSnapshotRead
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:GetObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"]
+      - PolicyName: CassandraRecoveryRead
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:GetObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/recovery/*"]
+      - PolicyName: CassandraMintRead
+        PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: Allow
+              Action: "s3:GetObject"
+              Resource: ["arn:aws:s3:::zalando-stups-mint-268094141749-eu-west-1/cassandra/*"]
+      - PolicyName: CassandraSnapshotListBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:ListBucket"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}"]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
