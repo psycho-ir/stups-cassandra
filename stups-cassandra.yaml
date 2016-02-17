@@ -28,6 +28,9 @@ SenzaInfo:
     - RecoverySnapshot:
         Description: "Timestamp of snapshot to recover from"
         Default: "2016-02-17:07"
+    - TTL:
+        Description: "Lock TTL"
+        Default: 30
 
 SenzaComponents:
 
@@ -84,7 +87,7 @@ SenzaComponents:
           CLUSTER_NAME: "{{SenzaInfo.StackVersion}}"
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
-          TTL: 120
+          TTL: "{{Arguments.TTL}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
           BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
           RECOVERY: "{{Arguments.Recovery}}"

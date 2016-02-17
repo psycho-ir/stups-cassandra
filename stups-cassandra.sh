@@ -78,8 +78,7 @@ then
 fi
 
 while true; do
-    curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/_bootstrap?prevExist=false" \
-        -XPUT -d value=${LISTEN_ADDRESS} -d ttl=${TTL} > /dev/null
+    curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/_bootstrap?prevExist=false" -XPUT -d value=${LISTEN_ADDRESS} -d ttl=${TTL} > /dev/null
     if [ $? -eq 0 ] ;
     then
         echo "Acquired bootstrap lock. Setting up node ..."
@@ -90,10 +89,9 @@ while true; do
            if [ -z "$DEAD_NODE_ADDRESS" ] ;
 	        then
                echo "Registering this node as the seed for zone ${NODE_ZONE} with TTL ${TTL}..."
-               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                   -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
+               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}"  -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
            fi
-	fi
+	    fi
 
         # Register the cluster with OpsCenter if there's already at least 1 seed node
         if [ -n $OPSCENTER -a $SEED_COUNT -gt 0 ] ;
