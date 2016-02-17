@@ -57,4 +57,6 @@ RUN touch /var/log/snapshot_cron.log && chmod 0777 /var/log/snapshot_cron.log
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+RUN mkdir -p /opt/recovery
+
 CMD ["/usr/bin/supervisord"]

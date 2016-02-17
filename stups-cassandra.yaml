@@ -19,13 +19,15 @@ SenzaInfo:
     - ApplicationId:
         Description: "The application id according to yourturn"
         Default: "cassandra"
-
     - BackupBucket:
         Description: "Your S3 Backup Bucket where your snapshots will be stored"
-        Default: "cassandra-stest-backup"
+        Default: "cassandra-release-backup"
     - Recovery:
         Description: "If cassandra cluster shall recover from snapshot"
         Default: "1"
+    - RecoverySnapshot:
+        Description: "Timestamp of snapshot to recover from"
+        Default: "2016-02-17:07"
     - TTL:
         Description: "Lock TTL"
         Default: 30
@@ -47,6 +49,7 @@ SenzaComponents:
       AutoScaling:
         Minimum: "{{Arguments.ClusterSize}}"
         Maximum: "{{Arguments.ClusterSize}}"
+        DesiredCapacity: "{{Arguments.MinClusterSize}}"
         MetricType: CPU
       TaupageConfig:
         root: true
@@ -86,6 +89,9 @@ SenzaComponents:
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
           TTL: "{{Arguments.TTL}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
+          BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
+          RECOVERY: "{{Arguments.Recovery}}"
+          recovery_snapshot: "{{Arguments.RecoverySnapshot}}"
 
 
 Resources:
@@ -121,6 +127,10 @@ Resources:
       - IpProtocol: tcp # SSH
         FromPort: 22
         ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp  # prometheus (memory and other metrics for zmon)
+        FromPort: 9100
+        ToPort: 9100
         CidrIp: 0.0.0.0/0
 
   # Automatically create roles.
