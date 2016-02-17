@@ -85,7 +85,7 @@ while true; do
         if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
         then
            if [ -z "$DEAD_NODE_ADDRESS" ] ;
-	   then
+	        then
                echo "Registering this node as the seed for zone ${NODE_ZONE} with TTL ${TTL}..."
                curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
                    -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
