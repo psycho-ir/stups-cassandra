@@ -24,7 +24,7 @@ SenzaInfo:
         Default: "cassandra-release-backup"
     - Recovery:
         Description: "If cassandra cluster shall recover from snapshot"
-        Default: "1"
+        Default: "0"
     - RecoverySnapshot:
         Description: "Timestamp of snapshot to recover from"
         Default: "2016-02-17:07"
