@@ -49,7 +49,7 @@ SenzaComponents:
       AutoScaling:
         Minimum: "{{Arguments.ClusterSize}}"
         Maximum: "{{Arguments.ClusterSize}}"
-        DesiredCapacity: "{{Arguments.MinClusterSize}}"
+        DesiredCapacity: "{{Arguments.ClusterSize}}"
         MetricType: CPU
       TaupageConfig:
         root: true
