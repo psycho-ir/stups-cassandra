@@ -17,7 +17,7 @@ NODE_ZONE=$(curl -s ${EC2_META_URL}/placement/availability-zone)
 
 #check if we are likely a replacement node
 REPLACE_ADDRESS_PARAM=''
-if nodetool status | grep '^D.' | head -n 1 >/tmp/nodetool-remote-status ;
+if nodetool status | grep '^D. \|^\?. ' | head -n 1 >/tmp/nodetool-remote-status ;
 then
      DEAD_NODE_ADDRESS=$(grep '^D. ' </tmp/nodetool-remote-status | awk '{print $2; exit}')
      if [ -n "$DEAD_NODE_ADDRESS" ] ;
