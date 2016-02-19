@@ -9,6 +9,17 @@
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
+function getDcSuffix {
+  while IFS='' read -r line || [[ -n "$line" ]]; do
+    if [[ $line == dc_suffix* ]]
+    then
+      IFS='=' read -r -a splitLine <<< "$line"
+      echo ${splitLine[1]} | xargs
+    fi
+  done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
+}
+DC_SUFFIX=$(getDcSuffix)
+
 if [ -z "$LISTEN_ADDRESS" ] ;
 then
     export LISTEN_ADDRESS=$(curl -Ls -m 4 http://169.254.169.254/latest/meta-data/local-ipv4)
@@ -59,9 +70,9 @@ while true ; do
            SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
            if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
            then
-                  #check if no seed in availability zone !
+                  #check if no seed in availability zone and DC!
                   SEED_FOR_ZONE=''
-                  SEED_FOR_ZONE=`curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq -r '.node.nodes[].value' | jq -r '.availabilityZone' | grep ${NODE_ZONE}`
+                  SEED_FOR_ZONE=`curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" | jq '. node.nodes '| grep -cE ${NODEZONE}.*${DCSUFFIX}`
                   if [ -z "$SEED_FOR_ZONE" ]
 		  then
                          # check if node in UN state (and can become seed)
@@ -73,7 +84,7 @@ while true ; do
                          if [ -n "$IS_NODE_NORMAL" ]
                          then
                                  curl -Lsf "${SEEDS_URL}/${NODE_HOSTNAME}" \
-                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
+                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DC_SUFFIX}\"}" -d ttl=${TTL} > /dev/null
                          fi
                   fi
            fi
