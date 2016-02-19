@@ -1,13 +1,13 @@
 #!/bin/bash
 # Script to process backup and restore functionallity in AWS
 # Maintainer: malte.pickhan@zalando.de
-backupFolder=$/var/cassandra/data/$keySpaceName/
-DATE=`date +%Y-%m-%d:%H:%M:%S`
+DATE=`date +%Y-%m-%d:%H`
 IP=$(curl -Ls -m 4 http://169.254.169.254/latest/meta-data/local-ipv4)
 
 commando=$1
 keySpaceName=$2
 bucket=$3
+backupFolder=/var/cassandra/data/$keySpaceName/*
 
 if [ "$commando" == "help" ]; then
 	echo "### Cassandra Snapshotter"
@@ -36,12 +36,28 @@ if [ "$commando" != "backup" ] && [ "$commando" != "help" ]; then
 fi 
 
 if [ "$commando" == "backup" ]; then
+
+        echo "Describe keyspace $keySpaceName"
+        mkdir -p /opt/recovery/meta/
+        cqlsh $IP -e "DESC $keySpaceName" > /opt/recovery/meta/$keySpaceName-$DATE.cql
+		aws s3 cp /opt/recovery/meta/$keySpaceName-$DATE.cql s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName.cql
+       	rm -rfv /opt/recovery/meta/$keySpaceName-$DATE.cql
+
+		echo "Get tokens"
+        mkdir -p /opt/recovery/meta
+        /opt/cassandra/bin/nodetool ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
+        aws s3 cp /opt/recovery/meta/tokens-$DATE.list s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/tokens.list
+        rm -rfv /opt/recovery/meta/tokens-$DATE.list
+
         echo "Creating snapshot for keyspace $keySpaceName"
+        /opt/cassandra/bin/nodetool flush
         /opt/cassandra/bin/nodetool snapshot
+
         echo "Moving file to S3 Bucket $bucket"
-        aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP --recursive
+ 		aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName --recursive
+
         echo "Cleanup"
-        `rm -f $backupFolder/snapshot/*`
+ 		rm -rfv $backupFolder/snapshots/*
         echo "Done with snapshot"
 else
 		echo "Quit Script"

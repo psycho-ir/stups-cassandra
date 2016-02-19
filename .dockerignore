@@ -2,4 +2,4 @@ stups-*.yaml
 Makefile
 *~
 apache-cassandra-*-bin.tar.gz
-*.jar
+#*.jar

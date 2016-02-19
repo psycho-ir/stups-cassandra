@@ -3,12 +3,13 @@ SenzaInfo:
   Parameters:
     - EtcdDomain:
         Description: "Your etcd domain (e.g. etcd.cassandra.rocks.org)"
+        Default: release.octopus.zalan.do
     - ClusterSize:
         Description: "The initial size (number of nodes) for the new Cassandra cluster"
         Default: "3"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "2.1.9-p0"
+        Default: "1.2-SNAPSHOT"
     - OpsCenterIp:
         Description: "Register to Opscenter using Ip address"
         Default: ""
@@ -17,7 +18,19 @@ SenzaInfo:
         Default: ""
     - ApplicationId:
         Description: "The application id according to yourturn"
-        Default: "stups-cassandra"
+        Default: "cassandra"
+    - BackupBucket:
+        Description: "Your S3 Backup Bucket where your snapshots will be stored"
+        Default: "cassandra-release-backup"
+    - Recovery:
+        Description: "If cassandra cluster shall recover from snapshot"
+        Default: "0"
+    - RecoverySnapshot:
+        Description: "Timestamp of snapshot to recover from"
+        Default: "2016-02-17:07"
+    - TTL:
+        Description: "Lock TTL"
+        Default: 30
 
 SenzaComponents:
 
@@ -26,23 +39,27 @@ SenzaComponents:
 
   - CassandraCluster:
       Type: Senza::TaupageAutoScalingGroup
-      InstanceType: "c3.2xlarge" # Has 2 80GB SSDs
+      InstanceType: "m3.xlarge" # Has 2 80GB SSDs
       SecurityGroups:
         - Fn::GetAtt:
           - StupsCassandraSg
           - GroupId
+      IamRoles:
+        - Ref: StupsCassandraRole
       AutoScaling:
         Minimum: "{{Arguments.ClusterSize}}"
         Maximum: "{{Arguments.ClusterSize}}"
+        DesiredCapacity: "{{Arguments.ClusterSize}}"
         MetricType: CPU
       TaupageConfig:
         root: true
         runtime: Docker
         networking: host
-        source: "registry.opensource.zalan.do/mop/stups-cassandra:{{Arguments.ImageVersion}}"
+        source: "pierone.stups.zalan.do/octopus/cassandra:{{Arguments.ImageVersion}}"
         application_id: "{{Arguments.ApplicationId}}"
         etcd_discovery_domain: "{{Arguments.EtcdDomain}}"
         scalyr_account_key: "{{Arguments.ScalyrKey}}"
+        mint_bucket: "zalando-stups-mint-268094141749-eu-west-1"
         # http://docs.datastax.com/en/opscenter/5.0/opsc/reference/opscPorts_r.html
         ports:
           7000: 7000
@@ -70,8 +87,11 @@ SenzaComponents:
           CLUSTER_NAME: "{{SenzaInfo.StackVersion}}"
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
-          TTL: 120
+          TTL: "{{Arguments.TTL}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
+          BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
+          RECOVERY: "{{Arguments.Recovery}}"
+          recovery_snapshot: "{{Arguments.RecoverySnapshot}}"
 
 
 Resources:
@@ -108,3 +128,56 @@ Resources:
         FromPort: 22
         ToPort: 22
         CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp  # prometheus (memory and other metrics for zmon)
+        FromPort: 9100
+        ToPort: 9100
+        CidrIp: 0.0.0.0/0
+
+  # Automatically create roles.
+  StupsCassandraRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+      - PolicyName: CassandraSnapshotWrite
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:PutObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"]
+      - PolicyName: CassandraSnapshotRead
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:GetObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/{{Arguments.ApplicationId}}-snapshot/*"]
+      - PolicyName: CassandraRecoveryRead
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:GetObject"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}/recovery/*"]
+      - PolicyName: CassandraMintRead
+        PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: Allow
+              Action: "s3:GetObject"
+              Resource: ["arn:aws:s3:::zalando-stups-mint-268094141749-eu-west-1/cassandra/*"]
+      - PolicyName: CassandraSnapshotListBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action: "s3:ListBucket"
+            Resource: ["arn:aws:s3:::{{Arguments.BackupBucket}}"]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
