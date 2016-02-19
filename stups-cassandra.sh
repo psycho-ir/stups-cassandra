@@ -130,6 +130,7 @@ fi
 
 echo "Generating configuration from template ..."
 python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra_template.yaml').read())" > /opt/cassandra/conf/cassandra.yaml
+python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra-rackdc_template.properties').read())" > /opt/cassandra/conf/cassandra-rackdc.properties
 #python -c "import pystache, os; print(pystache.render(open('/opt/cassandra/conf/cassandra_template.yaml').read(), dict(os.environ)))" > /opt/cassandra/conf/cassandra.yaml
 
 echo "Starting Cassandra ..."

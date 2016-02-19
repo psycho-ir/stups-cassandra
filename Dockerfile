@@ -32,6 +32,7 @@ ADD http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.3.1
 #RUN rm -f /tmp/jolokia-jvm-agent.jar.md5
 
 ADD cassandra_template.yaml /opt/cassandra/conf/
+ADD cassandra-rackdc_template.properties /opt/cassandra/conf/
 # Slightly modified in order to run jolokia
 ADD cassandra-env.sh /opt/cassandra/conf/
 
