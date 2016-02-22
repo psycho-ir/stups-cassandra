@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 # CLUSTER_NAME
 # DATA_DIR
 # COMMIT_LOG_DIR
 # LISTEN_ADDRESS
 
 # for the nodetool
+#nodetool status | tail -n +6 | tee | awk '{print $1$2;}'
 set -x
 
 export CASSANDRA_HOME=/opt/cassandra
@@ -14,17 +15,25 @@ EC2_META_URL=http://169.254.169.254/latest/meta-data
 
 NODE_HOSTNAME=$(curl -s ${EC2_META_URL}/local-hostname)
 NODE_ZONE=$(curl -s ${EC2_META_URL}/placement/availability-zone)
+#-Dcassandra.consistent.rangemovement=false
 
 #check if we are likely a replacement node
 REPLACE_ADDRESS_PARAM=''
-if nodetool status | grep '^D. \|^\?. ' | head -n 1 >/tmp/nodetool-remote-status ;
+temp=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq -r '.node.nodes[0].value')
+if [ $temp != "null" ] ;
 then
-     DEAD_NODE_ADDRESS=$(grep '^D. ' </tmp/nodetool-remote-status | awk '{print $2; exit}')
-     if [ -n "$DEAD_NODE_ADDRESS" ] ;
-     then
+    ONE_OF_SEED_NODES=${temp//\\}
+    SEED_HOST=$(echo $ONE_OF_SEED_NODES | jq -r '.host' )
+    if nodetool -h $SEED_HOST status | grep '^D. \|^\?. ' | head -n 1 >/tmp/nodetool-remote-status ;
+    then
+         DEAD_NODE_ADDRESS=$(grep '^D. ' </tmp/nodetool-remote-status | awk '{print $2; exit}')
+        if [ -n "$DEAD_NODE_ADDRESS" ] ;
+        then
           echo "There was a dead node at ${DEAD_NODE_ADDRESS}, will try to replace it ..."
           REPLACE_ADDRESS_PARAM=-Dcassandra.replace_address=${DEAD_NODE_ADDRESS}
-     fi
+        fi
+    fi
+
 fi
 
 # http://docs.datastax.com/en/cassandra/2.0/cassandra/architecture/architectureGossipAbout_c.html
@@ -142,6 +151,7 @@ echo "Starting Cassandra ..."
     -Dcassandra.cluster_name=${CLUSTER_NAME} \
     -Dcassandra.listen_address=${LISTEN_ADDRESS} \
     -Dcassandra.broadcast_rpc_address=${LISTEN_ADDRESS} \
+    -Djava.rmi.server.hostname=${LISTEN_ADDRESS} \
     ${REPLACE_ADDRESS_PARAM}
 
 else
@@ -240,5 +250,5 @@ else
         done
     done
 
-    /opt/cassandra/bin/nodetool repair
+    /opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS repair
 fi
