@@ -9,16 +9,9 @@
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-function getDcSuffix {
-  while IFS='' read -r line || [[ -n "$line" ]]; do
-    if [[ $line == dc_suffix* ]]
-    then
-      IFS='=' read -r -a splitLine <<< "$line"
-      echo ${splitLine[1]} | xargs
-    fi
-  done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
-}
-DC_SUFFIX=$(getDcSuffix)
+# DC_SUFFIX=$(python findDcSuffix.py)
+DC_SUFFIX=DC3
+echo $DC_SUFFIX
 
 if [ -z "$LISTEN_ADDRESS" ] ;
 then
@@ -54,27 +47,25 @@ fi
 while true ; do
 
 	# check if node is registerd as seed
-       SEED_ADDR=
        SEED_ADDR=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME} | grep -v 'errorCode":100')
 
        # refresh TTL if seed
        if [ -n "$SEED_ADDR" ] ;
        then
                curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" > /dev/null
+                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DC_SUFFIX}\"}" > /dev/null
        fi
 
        # check if missing seeds 
        if [ -z "$SEED_ADDR" ] ;
        then
-           SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
-           if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
+           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DC_SUFFIX})
+           if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
            then
                   #check if no seed in availability zone and DC!
-                  SEED_FOR_ZONE=''
-                  SEED_FOR_ZONE=`curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" | jq '. node.nodes '| grep -cE ${NODEZONE}.*${DCSUFFIX}`
-                  if [ -z "$SEED_FOR_ZONE" ]
-		  then
+                  SEED_FOR_ZONE=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -cE ${NODE_ZONE}.*${DCSUFFIX})
+                  if [ "$SEED_FOR_ZONE" -eq 0 ]
+		              then
                          # check if node in UN state (and can become seed)
                          NODE_IP=`hostname | sed  's/ip-//' | sed 's/-/./g'`
                          IS_NODE_NORMAL=''

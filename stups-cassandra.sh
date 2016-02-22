@@ -10,16 +10,8 @@ set -x
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-function getDcSuffix {
-  while IFS='' read -r line || [[ -n "$line" ]]; do
-    if [[ $line == dc_suffix* ]]
-    then
-      IFS='=' read -r -a splitLine <<< "$line"
-      echo ${splitLine[1]} | xargs
-    fi
-  done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
-}
-DC_SUFFIX=$(getDcSuffix)
+# DC_SUFFIX=$(python findDcSuffix.py)
+DC_SUFFIX=DC3
 echo $DC_SUFFIX
 
 EC2_META_URL=http://169.254.169.254/latest/meta-data
@@ -94,12 +86,10 @@ while true; do
     if [ $? -eq 0 ] ;
     then
         echo "Acquired bootstrap lock. Setting up node ..."
-        SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
-        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" | jq '. node.nodes '| grep -c $DC_SUFFIX)
-        echo '---------------'
-        echo SEED_COUNT_IN_VDC
+        # SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
+        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DC_SUFFIX})
 	# registering new node as seed: if seeds still needed and NOT a replacement node
-        if [ $SEED_COUNT -lt $NEEDED_SEEDS ] || [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
+        if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
         then
            if [ -z "$DEAD_NODE_ADDRESS" ] ;
 	        then
