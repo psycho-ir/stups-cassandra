@@ -78,7 +78,7 @@ while true ; do
                          # check if node in UN state (and can become seed)
                          NODE_IP=`hostname | sed  's/ip-//' | sed 's/-/./g'`
                          IS_NODE_NORMAL=''
-                         IS_NODE_NORMAL=`nodetool status | grep '^UN' | grep ${NODE_IP}`
+                         IS_NODE_NORMAL=`nodetool -h $LISTEN_ADDRESS status | grep '^UN' | grep ${NODE_IP}`
 
                          # REGISTER AS SEED FOR ZONE
                          if [ -n "$IS_NODE_NORMAL" ]

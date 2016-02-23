@@ -9,6 +9,11 @@ keySpaceName=$2
 bucket=$3
 backupFolder=/var/cassandra/data/$keySpaceName/*
 
+if [ -z "$LISTEN_ADDRESS" ] ;
+then
+    export LISTEN_ADDRESS=$(curl -Ls -m 4 http://169.254.169.254/latest/meta-data/local-ipv4)
+fi
+
 if [ "$commando" == "help" ]; then
 	echo "### Cassandra Snapshotter"
 	echo "commando: backup [keySpaceName] [bucket] -- Creates a snapshot of the Cassandra Custer and the given keySpaceName and moves it to the S3 bucket"
@@ -45,13 +50,13 @@ if [ "$commando" == "backup" ]; then
 
 		echo "Get tokens"
         mkdir -p /opt/recovery/meta
-        /opt/cassandra/bin/nodetool ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
+        /opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
         aws s3 cp /opt/recovery/meta/tokens-$DATE.list s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/tokens.list
         rm -rfv /opt/recovery/meta/tokens-$DATE.list
 
         echo "Creating snapshot for keyspace $keySpaceName"
-        /opt/cassandra/bin/nodetool flush
-        /opt/cassandra/bin/nodetool snapshot
+        /opt/cassandra/bin/nodetool  -h $LISTEN_ADDRESS flush
+        /opt/cassandra/bin/nodetool  -h $LISTEN_ADDRESS snapshot
 
         echo "Moving file to S3 Bucket $bucket"
  		aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName --recursive
