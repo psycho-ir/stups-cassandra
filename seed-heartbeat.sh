@@ -57,9 +57,11 @@ while true ; do
        if [ -z "$SEED_ADDR" ] ;
        then
            SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
+           echo "number of seeds: ${SEED_COUNT}"
+
            if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
            then
-                  #check if no seed in availability zone !
+                  echo "check if no seed in availability zone !"
                   SEED_FOR_ZONE=''
                   SEED_FOR_ZONE=`curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq -r '.node.nodes[].value' | jq -r '.availabilityZone' | grep ${NODE_ZONE}`
                   if [ -z "$SEED_FOR_ZONE" ]
@@ -72,7 +74,7 @@ while true ; do
                          # REGISTER AS SEED FOR ZONE
                          if [ -n "$IS_NODE_NORMAL" ]
                          then
-                                 curl -Lsf "${SEEDS_URL}/${NODE_HOSTNAME}" \
+                                 curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
                                       -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
                          fi
                   fi
