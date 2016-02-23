@@ -11,7 +11,8 @@ set -x
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-sed -i '' 's/^dc_suffix=.*/dc_suffix=${DCSUFFIX}/' /opt/cassandra/conf/cassandra-rackdc_template.properties
+# sed -i '' 's/^dc_suffix=.*/dc_suffix=DC666/' cassandra-rackdc_template.properties # use this line when executing on a Mac!
+sed -i 's/^dc_suffix=.*/dc_suffix=${DCSUFFIX}/' /opt/cassandra/conf/cassandra-rackdc_template.properties
 
 EC2_META_URL=http://169.254.169.254/latest/meta-data
 

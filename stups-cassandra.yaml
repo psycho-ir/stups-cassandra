@@ -33,7 +33,7 @@ SenzaInfo:
         Default: 30
     - DCSuffix:
         Description: "DC_Suffix in cassandra rackdc file"
-        Default: "DC2"
+        Default: "DC3"
     - ClusterName:
         Description: "Name of the cluster"
         Default: "MYCLUSTER"
@@ -61,7 +61,7 @@ SenzaComponents:
         root: true
         runtime: Docker
         networking: host
-        source: "pierone.stups.zalan.do/octopus/vdccassie:{{Arguments.ImageVersion}}"
+        source: "pierone.stups.zalan.do/octopus/octopus-multidc-cassandra:{{Arguments.ImageVersion}}"
         application_id: "{{Arguments.ApplicationId}}"
         etcd_discovery_domain: "{{Arguments.EtcdDomain}}"
         scalyr_account_key: "{{Arguments.ScalyrKey}}"
