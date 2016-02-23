@@ -9,8 +9,17 @@
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-# DC_SUFFIX=$(python findDcSuffix.py)
-DC_SUFFIX=DC3
+getDcSuffix() {
+  while IFS='' read -r line || [ -n "$line" ]; do
+    if [ $(echo $line | grep -c dc_suffix) -eq 1 ]
+     then
+       IFS='=' 
+       set -- $line
+       echo $2 | xargs
+     fi
+   done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
+ }
+DC_SUFFIX=$(getDcSuffix)
 echo $DC_SUFFIX
 
 if [ -z "$LISTEN_ADDRESS" ] ;
