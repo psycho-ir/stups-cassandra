@@ -6,10 +6,10 @@ SenzaInfo:
         Default: release.octopus.zalan.do
     - ClusterSize:
         Description: "The initial size (number of nodes) for the new Cassandra cluster"
-        Default: "3"
+        Default: "4"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "1.2-SNAPSHOT"
+        Default: "0.1-SNAPSHOT"
     - OpsCenterIp:
         Description: "Register to Opscenter using Ip address"
         Default: ""
@@ -31,6 +31,12 @@ SenzaInfo:
     - TTL:
         Description: "Lock TTL"
         Default: 30
+    - DCSuffix:
+        Description: "DC_Suffix in cassandra rackdc file"
+        Default: "DC2"
+    - ClusterName:
+        Description: "Name of the cluster"
+        Default: "MYCLUSTER"
 
 SenzaComponents:
 
@@ -55,7 +61,7 @@ SenzaComponents:
         root: true
         runtime: Docker
         networking: host
-        source: "pierone.stups.zalan.do/octopus/cassandra:{{Arguments.ImageVersion}}"
+        source: "pierone.stups.zalan.do/octopus/vdccassie:{{Arguments.ImageVersion}}"
         application_id: "{{Arguments.ApplicationId}}"
         etcd_discovery_domain: "{{Arguments.EtcdDomain}}"
         scalyr_account_key: "{{Arguments.ScalyrKey}}"
@@ -84,7 +90,7 @@ SenzaComponents:
             erase_on_boot: true
 
         environment:
-          CLUSTER_NAME: "{{SenzaInfo.StackVersion}}"
+          CLUSTER_NAME: "{{Arguments.ClusterName}}"
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
           OPSCENTER: "{{Arguments.OpsCenterIp}}"
           TTL: "{{Arguments.TTL}}"
@@ -92,6 +98,7 @@ SenzaComponents:
           BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
           RECOVERY: "{{Arguments.Recovery}}"
           recovery_snapshot: "{{Arguments.RecoverySnapshot}}"
+          DCSUFFIX: "{{Arguments.DCSuffix}}"
 
 
 Resources:

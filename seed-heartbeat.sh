@@ -9,19 +9,6 @@
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-getDcSuffix() {
-  while IFS='' read -r line || [ -n "$line" ]; do
-    if [ $(echo $line | grep -c dc_suffix) -eq 1 ]
-     then
-       IFS='=' 
-       set -- $line
-       echo $2 | xargs
-     fi
-   done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
- }
-DC_SUFFIX=$(getDcSuffix)
-echo $DC_SUFFIX
-
 if [ -z "$LISTEN_ADDRESS" ] ;
 then
     export LISTEN_ADDRESS=$(curl -Ls -m 4 http://169.254.169.254/latest/meta-data/local-ipv4)
@@ -62,13 +49,13 @@ while true ; do
        if [ -n "$SEED_ADDR" ] ;
        then
                curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DC_SUFFIX}\"}" > /dev/null
+                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" > /dev/null
        fi
 
        # check if missing seeds 
        if [ -z "$SEED_ADDR" ] ;
        then
-           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DC_SUFFIX})
+           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
            if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
            then
                   #check if no seed in availability zone and DC!
@@ -84,7 +71,7 @@ while true ; do
                          if [ -n "$IS_NODE_NORMAL" ]
                          then
                                  curl -Lsf "${SEEDS_URL}/${NODE_HOSTNAME}" \
-                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DC_SUFFIX}\"}" -d ttl=${TTL} > /dev/null
+                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" -d ttl=${TTL} > /dev/null
                          fi
                   fi
            fi

@@ -11,18 +11,7 @@ set -x
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
-getDcSuffix() {
-  while IFS='' read -r line || [ -n "$line" ]; do
-    if [ $(echo $line | grep -c dc_suffix) -eq 1 ]
-     then
-       IFS='=' 
-       set -- $line
-       echo $2 | xargs
-     fi
-   done < "/opt/cassandra/conf/cassandra-rackdc_template.properties"
- }
-DC_SUFFIX=$(getDcSuffix)
-echo $DC_SUFFIX
+sed -i '' 's/^dc_suffix=.*/dc_suffix=${DCSUFFIX}/' /opt/cassandra/conf/cassandra-rackdc_template.properties
 
 EC2_META_URL=http://169.254.169.254/latest/meta-data
 
@@ -105,14 +94,14 @@ while true; do
     then
         echo "Acquired bootstrap lock. Setting up node ..."
         # SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
-        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DC_SUFFIX})
+        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
 	# registering new node as seed: if seeds still needed and NOT a replacement node
         if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
         then
            if [ -z "$DEAD_NODE_ADDRESS" ] ;
 	        then
                echo "Registering this node as the seed for zone ${NODE_ZONE} with TTL ${TTL}..."
-               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}"  -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DC_SUFFIX}\"}" -d ttl=${TTL} > /dev/null
+               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}"  -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" -d ttl=${TTL} > /dev/null
            fi
 	    fi
 
