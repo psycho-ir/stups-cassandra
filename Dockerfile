@@ -51,6 +51,8 @@ COPY seed-heartbeat.sh /opt/cassandra/bin/seed-heartbeat.sh
 RUN chmod 0777 /opt/cassandra/bin/cassandra-snapshotter.sh && chmod 0777  /opt/cassandra/bin/snapshot-scheduler.sh && chmod 0777 /opt/cassandra/bin/seed-heartbeat.sh && chmod 0777 /opt/cassandra/conf/cassandra-env.sh
 
 COPY stups-cassandra.sh /opt/cassandra/bin/
+COPY recovery.sh /opt/cassandra/bin/
+RUN chmod +x /opt/cassandra/bin/recovery.sh
 
 # Create supervisor log folder
 RUN mkdir -p /var/log/supervisor && chmod 0777 /var/log/supervisor
