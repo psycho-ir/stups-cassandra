@@ -43,29 +43,25 @@ fi
 while true ; do
 
 	# check if node is registerd as seed
-       SEED_ADDR=
        SEED_ADDR=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME} | grep -v 'errorCode":100')
 
        # refresh TTL if seed
        if [ -n "$SEED_ADDR" ] ;
        then
                curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" > /dev/null
+                   -XPUT -d ttl=${TTL} -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" > /dev/null
        fi
 
        # check if missing seeds 
        if [ -z "$SEED_ADDR" ] ;
        then
-           SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
-           echo "number of seeds: ${SEED_COUNT}"
-
-           if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
+           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
+           if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
            then
-                  echo "check if no seed in availability zone !"
-                  SEED_FOR_ZONE=''
-                  SEED_FOR_ZONE=`curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq -r '.node.nodes[].value' | jq -r '.availabilityZone' | grep ${NODE_ZONE}`
-                  if [ -z "$SEED_FOR_ZONE" ]
-		  then
+                  #check if no seed in availability zone and DC!
+                  SEED_FOR_ZONE=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -cE ${NODE_ZONE}.*${DCSUFFIX})
+                  if [ "$SEED_FOR_ZONE" -eq 0 ]
+		              then
                          # check if node in UN state (and can become seed)
                          NODE_IP=`hostname | sed  's/ip-//' | sed 's/-/./g'`
                          IS_NODE_NORMAL=''
@@ -75,7 +71,7 @@ while true ; do
                          if [ -n "$IS_NODE_NORMAL" ]
                          then
                                  curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
-                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
+                                      -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" -d ttl=${TTL} > /dev/null
                          fi
                   fi
            fi

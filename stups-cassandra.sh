@@ -11,6 +11,9 @@ set -x
 export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
+# sed -i '' 's/^dc_suffix=.*/dc_suffix=DC666/' cassandra-rackdc_template.properties # use this line when executing on a Mac!
+sed -i 's/^dc_suffix=.*/dc_suffix=${DCSUFFIX}/' /opt/cassandra/conf/cassandra-rackdc_template.properties
+
 EC2_META_URL=http://169.254.169.254/latest/meta-data
 
 NODE_HOSTNAME=$(curl -s ${EC2_META_URL}/local-hostname)
@@ -91,19 +94,20 @@ while true; do
     if [ $? -eq 0 ] ;
     then
         echo "Acquired bootstrap lock. Setting up node ..."
-        SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
+        # SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
+        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
 	# registering new node as seed: if seeds still needed and NOT a replacement node
-        if [ $SEED_COUNT -lt $NEEDED_SEEDS ] ;
+        if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
         then
            if [ -z "$DEAD_NODE_ADDRESS" ] ;
 	        then
                echo "Registering this node as the seed for zone ${NODE_ZONE} with TTL ${TTL}..."
-               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}"  -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\"}" -d ttl=${TTL} > /dev/null
+               curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}"  -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" -d ttl=${TTL} > /dev/null
            fi
 	    fi
 
         # Register the cluster with OpsCenter if there's already at least 1 seed node
-        if [ -n $OPSCENTER -a $SEED_COUNT -gt 0 ] ;
+        if [ -n $OPSCENTER -a $SEED_COUNT_IN_VDC -gt 0 ] ;
         then
             curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/opscenter_ip?prevExist=false" \
                 -XPUT -d value=${OPSCENTER} > /dev/null
@@ -140,6 +144,7 @@ fi
 
 echo "Generating configuration from template ..."
 python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra_template.yaml').read())" > /opt/cassandra/conf/cassandra.yaml
+python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra-rackdc_template.properties').read())" > /opt/cassandra/conf/cassandra-rackdc.properties
 #python -c "import pystache, os; print(pystache.render(open('/opt/cassandra/conf/cassandra_template.yaml').read(), dict(os.environ)))" > /opt/cassandra/conf/cassandra.yaml
 
 

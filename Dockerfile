@@ -16,7 +16,7 @@ RUN apt-get -y install curl python wget jq datastax-agent sysstat python-pip sup
 RUN pip install awscli
 
 ENV CASSIE_VERSION=2.1.13
-ADD http://ftp.halifax.rwth-aachen.de/apache/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
+ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
 #RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 #RUN md5sum --check /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 
@@ -32,6 +32,7 @@ ADD http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.3.1
 #RUN rm -f /tmp/jolokia-jvm-agent.jar.md5
 
 ADD cassandra_template.yaml /opt/cassandra/conf/
+ADD cassandra-rackdc_template.properties /opt/cassandra/conf/
 # Slightly modified in order to run jolokia
 ADD cassandra-env.sh /opt/cassandra/conf/
 
