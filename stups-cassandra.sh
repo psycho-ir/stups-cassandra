@@ -203,53 +203,59 @@ else
 
     S3_DIR=/var/cassandra/s3
     mkdir -p $S3_DIR
-    aws s3 cp "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot" $S3_DIR --recursive
+    snapshot_count=`aws s3 ls "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot/" | wc -l`
+    # aws s3 cp "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot" $S3_DIR --recursive
 
-    snapshot_count=`ls $S3_DIR | wc -l`
 
-    if [ $my_order -gt $snapshot_count ]; then
-        #if number of nodes is greater than number of snapshots
-        #try to recover from snapshot which is already used by another node.
-        #otherwise data distribution may become not balanced
-        my_order=$(($my_order-$snapshot_count))
+    # snapshot_count=`ls $S3_DIR | wc -l`
+
+    if [ $my_order -le $snapshot_count ]; then
+        
+        #list available snaphsots | print only folder name | take my_order 'th snapshot
+        #result will be smth like '172.31.123.321/'
+		node_folder=`aws s3 ls "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot/" | awk '{print $2;}' | sed -n ${my_order}p`
+    	aws s3 cp "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot/$node_folder" $S3_DIR/$node_folder --recursive
+
+        # my_order=$(($my_order-$snapshot_count))
+    	
+
+		# node_folder=`ls $S3_DIR | sed -n ${my_order}p`
+		node_folder="$S3_DIR/$node_folder"
+
+		for cql_file in `ls $node_folder*.cql`;
+		do
+		    cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
+		    exists=`echo $cout | grep already | wc -l`
+		    # cout=`cqlsh $LISTEN_ADDRESS -f $SCHEMA_DEFINITION`
+		    result_status=$?
+		    echo $result_status:$cout
+		    count=0
+		    while [ $result_status -ne 0 ]; do
+		        if [ $exists -ne 0 ]; then
+		            echo "Already Exists...break"
+		            break
+		        fi
+		        echo "Sleep 10s..."
+		        sleep 10s
+		        cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
+		        result_status=$?
+		        echo $result_status:$cout
+		    done
+		done
+		for snapshot_dir in `ls -d $node_folder*/*/`;
+		do
+		    cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
+		    result_status=$?
+		    echo $result_status:$cout
+		    while [ $result_status -ne 0 ]; do
+		        echo "Sleep 10s..."
+		        sleep 10s
+		        cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
+		        result_status=$?
+		        echo $result_status:$cout
+		    done
+		done
+
+		/opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS repair
     fi
-
-    node_folder=`ls $S3_DIR | sed -n ${my_order}p`
-    node_folder="$S3_DIR/$node_folder"
-
-    for cql_file in `ls $node_folder/*.cql`;
-    do
-        cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
-        exists=`echo $cout | grep already | wc -l`
-        # cout=`cqlsh $LISTEN_ADDRESS -f $SCHEMA_DEFINITION`
-        result_status=$?
-        echo $result_status:$cout
-        count=0
-        while [ $result_status -ne 0 ]; do
-            if [ $exists -ne 0 ]; then
-                echo "Already Exists...break"
-                break
-            fi
-            echo "Sleep 10s..."
-            sleep 10s
-            cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
-            result_status=$?
-            echo $result_status:$cout
-        done
-    done
-    for snapshot_dir in `ls -d $node_folder/*/*/`;
-    do
-        cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-        result_status=$?
-        echo $result_status:$cout
-        while [ $result_status -ne 0 ]; do
-            echo "Sleep 10s..."
-            sleep 10s
-            cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-            result_status=$?
-            echo $result_status:$cout
-        done
-    done
-
-    /opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS repair
 fi

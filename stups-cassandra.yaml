@@ -6,10 +6,10 @@ SenzaInfo:
         Default: release.octopus.zalan.do
     - ClusterSize:
         Description: "The initial size (number of nodes) for the new Cassandra cluster"
-        Default: "3"
+        Default: "4"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "1.2-SNAPSHOT"
+        Default: "0.0.1-SNAPSHOT"
     - OpsCenterIp:
         Description: "Register to Opscenter using Ip address"
         Default: ""
@@ -24,10 +24,10 @@ SenzaInfo:
         Default: "cassandra-release-backup"
     - Recovery:
         Description: "If cassandra cluster shall recover from snapshot"
-        Default: "0"
+        Default: "1"
     - RecoverySnapshot:
         Description: "Timestamp of snapshot to recover from"
-        Default: "2016-02-17:07"
+        Default: "2016-03-02:12"
     - TTL:
         Description: "Lock TTL"
         Default: 30
