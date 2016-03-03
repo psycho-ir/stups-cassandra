@@ -167,13 +167,13 @@ else
             then
                 my_order=1
                 out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryOrder?prevExist=false \
-                    -XPUT -d value=1 -d ttl=${TTL})
+                    -XPUT -d value=1 )
                 echo "$out"
 
             else
                 my_order=$((prev_order+1))
                 out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryOrder?prevValue=$prev_order \
-                    -XPUT -d value=$my_order -d ttl=${TTL} | jq -r '.errorCode')
+                    -XPUT -d value=$my_order | jq -r '.errorCode')
                 if [ "$out" != "null" ] ;
                 then
                     echo "ERROR!"
