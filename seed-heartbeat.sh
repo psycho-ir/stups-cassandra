@@ -70,7 +70,7 @@ while true ; do
                          # REGISTER AS SEED FOR ZONE
                          if [ -n "$IS_NODE_NORMAL" ]
                          then
-                                 curl -Lsf "${SEEDS_URL}/${NODE_HOSTNAME}" \
+                                 curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds/${NODE_HOSTNAME}" \
                                       -XPUT -d value="{\"host\":\"${LISTEN_ADDRESS}\",\"availabilityZone\":\"${NODE_ZONE}\",\"dcSuffix\":\"${DCSUFFIX}\"}" -d ttl=${TTL} > /dev/null
                          fi
                   fi

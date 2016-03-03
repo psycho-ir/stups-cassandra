@@ -203,9 +203,10 @@ else
         -Dcassandra.cluster_name=${CLUSTER_NAME} \
         -Dcassandra.listen_address=${LISTEN_ADDRESS} \
         -Dcassandra.broadcast_rpc_address=${LISTEN_ADDRESS} \
+        -Djava.rmi.server.hostname=${LISTEN_ADDRESS} \
         ${REPLACE_ADDRESS_PARAM}
 
-    S3_DIR=/opt/recovery/s3
+    S3_DIR=/var/cassandra/s3
     mkdir -p $S3_DIR
     aws s3 cp "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot" $S3_DIR --recursive
 
