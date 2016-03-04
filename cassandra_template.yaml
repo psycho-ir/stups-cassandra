@@ -184,7 +184,7 @@ row_cache_save_period: 0
 #
 # Default value is empty to make it "auto" (min(2.5% of Heap (in MB), 50MB)). Set to 0 to disable counter cache.
 # NOTE: if you perform counter deletes and rely on low gcgs, you should disable the counter cache.
-counter_cache_size_in_mb:
+counter_cache_size_in_mb: 0
 
 # Duration in seconds after which Cassandra should
 # save the counter cache (keys only). Caches are saved to saved_caches_directory as
@@ -208,7 +208,7 @@ counter_cache_save_period: 7200
 # modify cassandra-env.sh as directed in the file.
 #
 # Defaults to NativeAllocator
-# memory_allocator: NativeAllocator
+memory_allocator: NativeAllocator
 
 # saved caches
 # If not set, the default directory is $CASSANDRA_HOME/data/saved_caches.
@@ -280,7 +280,7 @@ concurrent_counter_writes: 32
 # and will trigger a flush based on memtable_cleanup_threshold
 # If omitted, Cassandra will set both to 1/4 the size of the heap.
 # memtable_heap_space_in_mb: 2048
-# memtable_offheap_space_in_mb: 2048
+ memtable_offheap_space_in_mb: 16192
 
 # Ratio of occupied non-flushing memtable size to total permitted size
 # that will trigger a flush of the largest memtable.  Lager mct will
@@ -289,14 +289,15 @@ concurrent_counter_writes: 32
 # under heavy write load.
 #
 # memtable_cleanup_threshold defaults to 1 / (memtable_flush_writers + 1)
-# memtable_cleanup_threshold: 0.11
+ memtable_cleanup_threshold: 0.50
 
 # Specify the way Cassandra allocates and manages memtable memory.
 # Options are:
 #   heap_buffers:    on heap nio buffers
 #   offheap_buffers: off heap (direct) nio buffers
 #   offheap_objects: native memory, eliminating nio buffer heap overhead
-memtable_allocation_type: heap_buffers
+#memtable_allocation_type: heap_buffers
+memtable_allocation_type: offheap_objects
 
 # Total space to use for commitlogs.  Since commitlog segments are
 # mmapped, and hence use up address space, the default size is 32
@@ -306,7 +307,7 @@ memtable_allocation_type: heap_buffers
 # segment multiple), Cassandra will flush every dirty CF in the oldest
 # segment and remove it.  So a small total commitlog space will tend
 # to cause more flush activity on less-active columnfamilies.
-# commitlog_total_space_in_mb: 8192
+commitlog_total_space_in_mb: 8192
 
 # This sets the amount of memtable flush writer threads.  These will
 # be blocked by disk io, and each one will hold a memtable in memory
@@ -317,7 +318,7 @@ memtable_allocation_type: heap_buffers
 # 
 # If your data directories are backed by SSD, you should increase this
 # to the number of cores.
-#memtable_flush_writers: 8
+memtable_flush_writers: 8
 
 # A fixed memory pool size in MB for for SSTable index summaries. If left
 # empty, this will default to 5% of the heap size. If the memory usage of
