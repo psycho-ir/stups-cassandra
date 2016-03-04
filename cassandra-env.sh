@@ -288,6 +288,7 @@ JVM_OPTS="$JVM_OPTS -Djava.rmi.server.hostname=$LISTEN_ADDRESS"
 #
 LOCAL_JMX=no
 
+
 if [ "$LOCAL_JMX" = "yes" ]; then
   JVM_OPTS="$JVM_OPTS -Dcassandra.jmx.local.port=$JMX_PORT -XX:+DisableExplicitGC"
 else
@@ -313,6 +314,10 @@ fi
 # to control its listen address and port.
 #MX4J_ADDRESS="-Dmx4jaddress=127.0.0.1"
 #MX4J_PORT="-Dmx4jport=8081"
+
+#GC configurations
+JVM_OPTS="$env:JVM_OPTS -XX:+UseG1GC"
+JVM_OPTS="$env:JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=5"
 
 JVM_OPTS="$JVM_OPTS $MX4J_ADDRESS"
 JVM_OPTS="$JVM_OPTS $MX4J_PORT"
