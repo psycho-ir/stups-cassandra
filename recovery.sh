@@ -52,7 +52,7 @@ if [ $my_order -le $snapshot_count ]; then
 
 	for cql_file in `ls $node_folder*.cql`;
 	do
-	    cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
+	    cout=`/opt/apache-cassandra-3.3/bin/cqlsh.py $LISTEN_ADDRESS -f $cql_file 2>&1`
 	    exists=`echo $cout | grep already | wc -l`
 	    # cout=`cqlsh $LISTEN_ADDRESS -f $SCHEMA_DEFINITION`
 	    result_status=$?
@@ -65,7 +65,7 @@ if [ $my_order -le $snapshot_count ]; then
 	        fi
 	        echo "Sleep 10s..."
 	        sleep 10s
-	        cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
+	        cout=`/opt/apache-cassandra-3.3/bin/cqlsh.py $LISTEN_ADDRESS -f $cql_file 2>&1`
 	        result_status=$?
 	        echo $result_status:$cout
 	    done
