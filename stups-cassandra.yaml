@@ -9,13 +9,13 @@ SenzaInfo:
         Default: "4"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "0.7-SNAPSHOT"
+        Default: "1.0-SNAPSHOT"
     - OpsCenterIp:
         Description: "Register to Opscenter using Ip address"
         Default: ""
     - ScalyrKey:
         Description: "The API key of Scalyr logging service used by Taupage"
-        Default: ""
+        Default: "0nQOAOXXJVu3kEtxP5AnMUb5eNh_M/W4WBvf7mx43siI-"
     - ApplicationId:
         Description: "The application id according to yourturn"
         Default: "cassandra"
@@ -36,7 +36,7 @@ SenzaInfo:
         Default: "DC3"
     - ClusterName:
         Description: "Name of the cluster"
-        Default: "MYCLUSTER"
+        Default: "RELEASECLUSTER"
 
 SenzaComponents:
 
@@ -45,7 +45,7 @@ SenzaComponents:
 
   - CassandraCluster:
       Type: Senza::TaupageAutoScalingGroup
-      InstanceType: "m3.xlarge" # Has 2 80GB SSDs
+      InstanceType: "i2.2xlarge" # Has 2 800GB SSDs
       SecurityGroups:
         - Fn::GetAtt:
           - StupsCassandraSg

@@ -147,11 +147,11 @@ python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassand
 python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra-rackdc_template.properties').read())" > /opt/cassandra/conf/cassandra-rackdc.properties
 #python -c "import pystache, os; print(pystache.render(open('/opt/cassandra/conf/cassandra_template.yaml').read(), dict(os.environ)))" > /opt/cassandra/conf/cassandra.yaml
 
-if [ "$RECOVERY" -eq 0 ] ;
-then
 
 echo "Starting Cassandra ..."
-/opt/cassandra/bin/cassandra -f \
+/opt/cassandra/bin/cassandra \
+    -f \
+    -R \
     -Dcassandra.logdir=/var/cassandra/log \
     -Dcassandra.cluster_name=${CLUSTER_NAME} \
     -Dcassandra.listen_address=${LISTEN_ADDRESS} \
@@ -159,102 +159,8 @@ echo "Starting Cassandra ..."
     -Djava.rmi.server.hostname=${LISTEN_ADDRESS} \
     ${REPLACE_ADDRESS_PARAM}
 
-else
-    TTL=$TTL_REC
-    # This loop assigns order number for each node (to distribute snapshots afterwards)
-    while true; do
-        curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryLock?prevExist=false" \
-            -XPUT -d value=${LISTEN_ADDRESS} -d ttl=${TTL} > /dev/null
-        if [ $? -eq 0 ] ;
-        then
-            prev_order=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryOrder | jq -r '.node.value')
-            if [ "$prev_order" = "null" ] ;
-            then
-                my_order=1
-                out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryOrder?prevExist=false \
-                    -XPUT -d value=1 -d ttl=${TTL})
-                echo "$out"
-
-            else
-                my_order=$((prev_order+1))
-                out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryOrder?prevValue=$prev_order \
-                    -XPUT -d value=$my_order -d ttl=${TTL} | jq -r '.errorCode')
-                if [ "$out" != "null" ] ;
-                then
-                    echo "ERROR!"
-                    echo "$out"
-                fi
-            fi
-            out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryLock?prevValue=${LISTEN_ADDRESS} \
-                -XDELETE)
-            echo "$out"
-
-            break
-        else
-            echo "Failed to acquire recovery lock. Waiting for 10 seconds ..."
-            sleep 10
-        fi
-    done
-
-
-    echo "Starting Cassandra ..."
-    /opt/cassandra/bin/cassandra \
-        -Dcassandra.logdir=/var/cassandra/log \
-        -Dcassandra.cluster_name=${CLUSTER_NAME} \
-        -Dcassandra.listen_address=${LISTEN_ADDRESS} \
-        -Dcassandra.broadcast_rpc_address=${LISTEN_ADDRESS} \
-        -Djava.rmi.server.hostname=${LISTEN_ADDRESS} \
-        ${REPLACE_ADDRESS_PARAM}
-
-    S3_DIR=/var/cassandra/s3
-    mkdir -p $S3_DIR
-    aws s3 cp "s3://cassandra-release-backup/cassandra-snapshot/$recovery_snapshot" $S3_DIR --recursive
-
-    snapshot_count=`ls $S3_DIR | wc -l`
-
-    if [ $my_order -gt $snapshot_count ]; then
-        #if number of nodes is greater than number of snapshots
-        #try to recover from snapshot which is already used by another node.
-        #otherwise data distribution may become not balanced
-        my_order=$(($my_order-$snapshot_count))
-    fi
-
-    node_folder=`ls $S3_DIR | sed -n ${my_order}p`
-    node_folder="$S3_DIR/$node_folder"
-
-    for cql_file in `ls $node_folder/*.cql`;
-    do
-        cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
-        exists=`echo $cout | grep already | wc -l`
-        # cout=`cqlsh $LISTEN_ADDRESS -f $SCHEMA_DEFINITION`
-        result_status=$?
-        echo $result_status:$cout
-        count=0
-        while [ $result_status -ne 0 ]; do
-            if [ $exists -ne 0 ]; then
-                echo "Already Exists...break"
-                break
-            fi
-            echo "Sleep 10s..."
-            sleep 10s
-            cout=`cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
-            result_status=$?
-            echo $result_status:$cout
-        done
-    done
-    for snapshot_dir in `ls -d $node_folder/*/*/`;
-    do
-        cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-        result_status=$?
-        echo $result_status:$cout
-        while [ $result_status -ne 0 ]; do
-            echo "Sleep 10s..."
-            sleep 10s
-            cout=`/opt/cassandra/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-            result_status=$?
-            echo $result_status:$cout
-        done
-    done
-
-    /opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS repair
+if [ "$RECOVERY" -eq 1 ] ;
+then
+	/opt/cassandra/bin/recovery.sh
+  
 fi

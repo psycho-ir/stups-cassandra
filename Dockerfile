@@ -15,8 +15,9 @@ RUN apt-get -y install curl python wget jq datastax-agent sysstat python-pip sup
 # Needed for transferring snapshots
 RUN pip install awscli
 
-ENV CASSIE_VERSION=2.1.13
-ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
+ENV CASSIE_VERSION=3.3
+#ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
+ADD http://ftp.fau.de/apache/cassandra/3.3/apache-cassandra-3.3-bin.tar.gz /tmp/
 #RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 #RUN md5sum --check /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 
@@ -52,6 +53,8 @@ COPY seed-heartbeat.sh /opt/cassandra/bin/seed-heartbeat.sh
 RUN chmod 0777 /opt/cassandra/bin/cassandra-snapshotter.sh && chmod 0777  /opt/cassandra/bin/snapshot-scheduler.sh && chmod 0777 /opt/cassandra/bin/seed-heartbeat.sh && chmod 0777 /opt/cassandra/conf/cassandra-env.sh
 
 COPY stups-cassandra.sh /opt/cassandra/bin/
+COPY recovery.sh /opt/cassandra/bin/
+RUN chmod +x /opt/cassandra/bin/recovery.sh
 
 # Create supervisor log folder
 RUN mkdir -p /var/log/supervisor && chmod 0777 /var/log/supervisor
