@@ -316,8 +316,8 @@ fi
 #MX4J_PORT="-Dmx4jport=8081"
 
 #GC configurations
-JVM_OPTS="$env:JVM_OPTS -XX:+UseG1GC"
-JVM_OPTS="$env:JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=5"
+JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
+JVM_OPTS="$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=5"
 
 JVM_OPTS="$JVM_OPTS $MX4J_ADDRESS"
 JVM_OPTS="$JVM_OPTS $MX4J_PORT"
