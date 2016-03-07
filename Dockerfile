@@ -64,5 +64,6 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN mkdir -p /opt/recovery
 RUN export PATH=/opt/apache-cassandra-3.3/bin:$PATH
+RUN export CASSANDRA_HOME=/opt/apache-cassandra-3.3
 
 CMD ["/usr/bin/supervisord"]
