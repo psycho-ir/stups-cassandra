@@ -63,5 +63,6 @@ RUN touch /var/log/snapshot_cron.log && chmod 0777 /var/log/snapshot_cron.log
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN mkdir -p /opt/recovery
+RUN export PATH=/opt/apache-cassandra-3.3/bin:$PATH
 
 CMD ["/usr/bin/supervisord"]
