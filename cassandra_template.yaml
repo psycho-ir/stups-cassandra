@@ -208,7 +208,7 @@ counter_cache_save_period: 7200
 # modify cassandra-env.sh as directed in the file.
 #
 # Defaults to NativeAllocator
-memory_allocator: NativeAllocator
+# memory_allocator: NativeAllocator
 
 # saved caches
 # If not set, the default directory is $CASSANDRA_HOME/data/saved_caches.
@@ -280,7 +280,7 @@ concurrent_counter_writes: 32
 # and will trigger a flush based on memtable_cleanup_threshold
 # If omitted, Cassandra will set both to 1/4 the size of the heap.
 # memtable_heap_space_in_mb: 2048
- memtable_offheap_space_in_mb: 16192
+memtable_offheap_space_in_mb: 16192
 
 # Ratio of occupied non-flushing memtable size to total permitted size
 # that will trigger a flush of the largest memtable.  Lager mct will
@@ -289,7 +289,7 @@ concurrent_counter_writes: 32
 # under heavy write load.
 #
 # memtable_cleanup_threshold defaults to 1 / (memtable_flush_writers + 1)
- memtable_cleanup_threshold: 0.50
+memtable_cleanup_threshold: 0.50
 
 # Specify the way Cassandra allocates and manages memtable memory.
 # Options are:
@@ -297,7 +297,7 @@ concurrent_counter_writes: 32
 #   offheap_buffers: off heap (direct) nio buffers
 #   offheap_objects: native memory, eliminating nio buffer heap overhead
 #memtable_allocation_type: heap_buffers
-memtable_allocation_type: offheap_objects
+memtable_allocation_type: offheap_buffers
 
 # Total space to use for commitlogs.  Since commitlog segments are
 # mmapped, and hence use up address space, the default size is 32

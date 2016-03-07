@@ -203,9 +203,10 @@ JVM_OPTS="$JVM_OPTS -XX:ThreadPriorityPolicy=42"
 JVM_OPTS="$JVM_OPTS -Xms${MAX_HEAP_SIZE}"
 JVM_OPTS="$JVM_OPTS -Xmx${MAX_HEAP_SIZE}"
 JVM_OPTS="$JVM_OPTS -Xmn${HEAP_NEWSIZE}"
-JVM_OPTS="$JVM_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${DATA_DIR}"
+JVM_OPTS="$JVM_OPTS -XX:+HeapDumpOnOutOfMemoryError"
 
 # set jvm HeapDumpPath with CASSANDRA_HEAPDUMP_DIR
+CASSANDRA_HEAPDUMP_DIR=${DATA_DIR}
 if [ "x$CASSANDRA_HEAPDUMP_DIR" != "x" ]; then
     JVM_OPTS="$JVM_OPTS -XX:HeapDumpPath=$CASSANDRA_HEAPDUMP_DIR/cassandra-`date +%s`-pid$$.hprof"
 fi
@@ -316,8 +317,8 @@ fi
 #MX4J_PORT="-Dmx4jport=8081"
 
 #GC configurations
-JVM_OPTS="$env:$JVM_OPTS -XX:+UseG1GC"
-JVM_OPTS="$env:$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=5"
+# JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
+JVM_OPTS="$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=5"
 
 JVM_OPTS="$JVM_OPTS $MX4J_ADDRESS"
 JVM_OPTS="$JVM_OPTS $MX4J_PORT"
