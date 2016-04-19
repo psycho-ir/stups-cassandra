@@ -44,19 +44,19 @@ if [ "$commando" == "backup" ]; then
 
         echo "Describe keyspace $keySpaceName"
         mkdir -p /opt/recovery/meta/
-        cqlsh $IP -e "DESC $keySpaceName" > /opt/recovery/meta/$keySpaceName-$DATE.cql
+        $CASSANDRA_HOME/bin/cqlsh $IP -e "DESC $keySpaceName" > /opt/recovery/meta/$keySpaceName-$DATE.cql
 		aws s3 cp /opt/recovery/meta/$keySpaceName-$DATE.cql s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName.cql
        	rm -rfv /opt/recovery/meta/$keySpaceName-$DATE.cql
 
 		echo "Get tokens"
         mkdir -p /opt/recovery/meta
-        /opt/cassandra/bin/nodetool -h $LISTEN_ADDRESS ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
+        $CASSANDRA_HOME/bin/nodetool -h $LISTEN_ADDRESS ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
         aws s3 cp /opt/recovery/meta/tokens-$DATE.list s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/tokens.list
         rm -rfv /opt/recovery/meta/tokens-$DATE.list
 
         echo "Creating snapshot for keyspace $keySpaceName"
-        /opt/cassandra/bin/nodetool  -h $LISTEN_ADDRESS flush
-        /opt/cassandra/bin/nodetool  -h $LISTEN_ADDRESS snapshot
+        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS flush
+        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS snapshot
 
         echo "Moving file to S3 Bucket $bucket"
  		aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName --recursive
