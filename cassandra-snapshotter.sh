@@ -55,8 +55,8 @@ if [ "$commando" == "backup" ]; then
         rm -rfv /opt/recovery/meta/tokens-$DATE.list
 
         echo "Creating snapshot for keyspace $keySpaceName"
-        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS flush
-        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS snapshot
+        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS flush $keySpaceName
+        $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS snapshot $keySpaceName
 
         echo "Moving file to S3 Bucket $bucket"
  		aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName --recursive
