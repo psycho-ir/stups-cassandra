@@ -65,7 +65,7 @@ COPY scm-source.json /scm-source.json
 
 RUN mkdir -p /opt/recovery
 ENV CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
-RUN export PATH=${CASSANDRA_HOME}/bin:$PATH
+ENV PATH=${CASSANDRA_HOME}/bin:$PATH
 
 
 CMD ["/usr/bin/supervisord"]
