@@ -9,7 +9,7 @@ SenzaInfo:
         Default: "4"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "1.0.4"
+        Default: "1.0.5"
     - ScalyrKey:
         Description: "The API key of Scalyr logging service used by Taupage"
         Default: ""
@@ -24,16 +24,16 @@ SenzaInfo:
         Default: "1"
     - RecoverySnapshot:
         Description: "Timestamp of snapshot to recover from"
-        Default: "2016-04-22:06"
+        Default: "2016-06-09:08"
     - TTL:
         Description: "Lock TTL"
         Default: 30
     - DCSuffix:
         Description: "DC_Suffix in cassandra rackdc file"
-        Default: "DC1"
+        Default: "DC2"
     - ClusterName:
         Description: "Name of the cluster"
-        Default: "RELEASEFFM4"
+        Default: "C36"
 
 SenzaComponents:
 

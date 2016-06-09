@@ -1,4 +1,4 @@
-FROM zalando/openjdk:8u66-b17-1-3
+FROM registry.opensource.zalan.do/stups/openjdk:8u91-b14-1-22
 
 MAINTAINER Zalando <team-mop@zalando.de>
 
@@ -15,9 +15,9 @@ RUN apt-get -y install curl python wget jq sysstat python-pip supervisor && apt-
 # Needed for transferring snapshots
 RUN pip install awscli
 
-ENV CASSIE_VERSION=3.3
+ENV CASSIE_VERSION=3.6
 #ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
-ADD http://ftp.fau.de/apache/cassandra/3.3/apache-cassandra-3.3-bin.tar.gz /tmp/
+ADD http://ftp.fau.de/apache/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
 #RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 #RUN md5sum --check /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 
@@ -64,7 +64,8 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY scm-source.json /scm-source.json
 
 RUN mkdir -p /opt/recovery
-RUN export PATH=/opt/apache-cassandra-3.3/bin:$PATH
-RUN export CASSANDRA_HOME=/opt/apache-cassandra-3.3
+RUN export CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
+RUN export PATH=${CASSANDRA_HOME}/bin:$PATH
+
 
 CMD ["/usr/bin/supervisord"]
