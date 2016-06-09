@@ -8,7 +8,6 @@
 #nodetool status | tail -n +6 | tee | awk '{print $1$2;}'
 set -x
 
-export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
 # sed -i '' 's/^dc_suffix=.*/dc_suffix=DC666/' cassandra-rackdc_template.properties # use this line when executing on a Mac!

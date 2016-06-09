@@ -64,7 +64,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY scm-source.json /scm-source.json
 
 RUN mkdir -p /opt/recovery
-RUN export CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
+ENV CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
 RUN export PATH=${CASSANDRA_HOME}/bin:$PATH
 
 
