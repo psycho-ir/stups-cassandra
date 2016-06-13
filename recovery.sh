@@ -1,8 +1,6 @@
 # This loop assigns order number for each node (to distribute snapshots afterwards)
 
-CASSANDRA_2_HOME=/opt/cassandra
-CASSANDRA_3_HOME=/opt/apache-cassandra-3.3
-CASSANDRA_HOME=$CASSANDRA_3_HOME
+set -x
 
 while true; do
     curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/recoveryLock?prevExist=false" \
@@ -83,23 +81,25 @@ if [ $my_order -le $snapshot_count ]; then
 		keyspace_name=${keyspace_name:0:-1} # remove last slash
 		for snapshot_dir in `ls -d $node_folder/$keyspace_name/*/`;
 		do	
-			snapshot_name=`echo $snapshot_dir | grep -o "[^\/]*\/$"`
-			snapshot_name=${snapshot_name:0:-1}
-			table_name=`echo $snapshot_name | grep -o "[^-]*-"`
-			table_name=${table_name:0:-1}
-			cass_table=`ls -d "/var/cassandra/data/$keyspace_name/$table_name"* | grep -o "[^\/]*$"` 
-			echo "mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots"
-			mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots
-			echo "cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R"
-			cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R
-			echo "sstableupgrade $keyspace_name $table_name $snapshot_name"
-			sstableupgrade $keyspace_name $table_name $snapshot_name
-			echo "mkdir -p $node_folder/upgrade/$keyspace_name/$table_name"
-			mkdir -p $node_folder/upgrade/$keyspace_name/$table_name
-			echo "cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R"
-			cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R
-			echo "sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name"
-			sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name
+			sstableloader -d $LISTEN_ADDRESS $snapshot_dir
+
+			# snapshot_name=`echo $snapshot_dir | grep -o "[^\/]*\/$"`
+			# snapshot_name=${snapshot_name:0:-1}
+			# table_name=`echo $snapshot_name | grep -o "[^-]*-"`
+			# table_name=${table_name:0:-1}
+			# cass_table=`ls -d "/var/cassandra/data/$keyspace_name/$table_name"* | grep -o "[^\/]*$"` 
+			# echo "mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots"
+			# mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots
+			# echo "cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R"
+			# cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R
+			# echo "sstableupgrade $keyspace_name $table_name $snapshot_name"
+			# sstableupgrade $keyspace_name $table_name $snapshot_name
+			# echo "mkdir -p $node_folder/upgrade/$keyspace_name/$table_name"
+			# mkdir -p $node_folder/upgrade/$keyspace_name/$table_name
+			# echo "cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R"
+			# cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R
+			# echo "sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name"
+			# sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name
 			echo "---"
 		done
 	done
@@ -119,5 +119,6 @@ if [ $my_order -le $snapshot_count ]; then
 	#     done
 	# done
 
-	`$CASSANDRA_HOME/bin/nodetool -h $LISTEN_ADDRESS repair`
+	#`$CASSANDRA_HOME/bin/nodetool -h $LISTEN_ADDRESS repair`
+	nodetool -h $LISTEN_ADDRESS repair
 fi

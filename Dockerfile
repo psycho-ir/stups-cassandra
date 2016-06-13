@@ -67,5 +67,8 @@ RUN mkdir -p /opt/recovery
 ENV CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
 ENV PATH=${CASSANDRA_HOME}/bin:$PATH
 
+RUN echo 'deb mirror://mirrors.ubuntu.com/mirrors.txt precise main restricted universe multiverse' >> /etc/apt/sources.list
+RUN apt-get update
+RUN apt-get install -y vim --allow-unauthenticated
 
 CMD ["/usr/bin/supervisord"]
