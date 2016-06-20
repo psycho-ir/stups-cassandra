@@ -81,12 +81,20 @@ if [ $my_order -le $snapshot_count ]; then
 		keyspace_name=${keyspace_name:0:-1} # remove last slash
 		for snapshot_dir in `ls -d $node_folder/$keyspace_name/*/`;
 		do	
+			
 			sstableloader -d $LISTEN_ADDRESS $snapshot_dir
+			
+			# Old recovery with upgrading sstables from C* ver. 2 to ver. 3
+			# TODO: remove after a bit more testing
 
 			# snapshot_name=`echo $snapshot_dir | grep -o "[^\/]*\/$"`
 			# snapshot_name=${snapshot_name:0:-1}
 			# table_name=`echo $snapshot_name | grep -o "[^-]*-"`
 			# table_name=${table_name:0:-1}
+			# mkdir $node_folder/$keyspace_name/$table_name
+			# mv $snapshot_dir/* $node_folder/$keyspace_name/$table_name/
+			# sstableloader -d $LISTEN_ADDRESS $node_folder/$keyspace_name/$table_name/
+
 			# cass_table=`ls -d "/var/cassandra/data/$keyspace_name/$table_name"* | grep -o "[^\/]*$"` 
 			# echo "mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots"
 			# mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots
@@ -104,21 +112,5 @@ if [ $my_order -le $snapshot_count ]; then
 		done
 	done
 
-	# Old sstable load.
-	# for snapshot_dir in `ls -d $node_folder/*/*/`;
-	# do
-	#     cout=`$CASSANDRA_HOME/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-	#     result_status=$?
-	#     echo $result_status:$cout
-	#     while [ $result_status -ne 0 ]; do
-	#         echo "Sleep 10s..."
-	#         sleep 10s
-	#         cout=`$CASSANDRA_HOME/bin/sstableloader -d ${LISTEN_ADDRESS} $snapshot_dir 2>&1`
-	#         result_status=$?
-	#         echo $result_status:$cout
-	#     done
-	# done
-
-	#`$CASSANDRA_HOME/bin/nodetool -h $LISTEN_ADDRESS repair`
 	nodetool -h $LISTEN_ADDRESS repair
 fi
