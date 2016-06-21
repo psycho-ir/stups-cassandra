@@ -15,10 +15,11 @@ while [ -n "$BACKUP_BUCKET" ] ; do
                         if  [[ "${EXECUTE_PATTERN[0]}" == "?" || "${EXECUTE_PATTERN[0]}" == "$MINUTE" ]] ; then
                                 if [[ "${EXECUTE_PATTERN[1]}" == "?" || "${EXECUTE_PATTERN[1]}" == "$HOUR" ]] ; then
                                 #Execute the actual script for taking a snapshot                              
+                                snapshot_dir=`nodetool snapshot | tail -1| grep -o "[0-9]*"`
                                 for i in "${KEYSPACES[@]}"
                                         do
                                         echo "Executing snapshot"
-                                        flock -x -n /var/lock/cassandraSnapshotter.lock /opt/cassandra/bin/cassandra-snapshotter.sh backup $i $BACKUP_BUCKET >> /var/log/snapshot_cron.log
+                                        flock -x -n /var/lock/cassandraSnapshotter.lock /opt/cassandra/bin/cassandra-snapshotter.sh backup $i $BACKUP_BUCKET $snapshot_dir >> /var/log/snapshot_cron.log
                                         done
                                 fi
                         fi
