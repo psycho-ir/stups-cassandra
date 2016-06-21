@@ -128,6 +128,5 @@ echo "Starting Cassandra ..."
 
 if [ "$RECOVERY" -eq 1 ] ;
 then
-	/opt/cassandra/bin/recovery.sh 2>&1 >> /opt/cassandra/recovery.log
-  
+	/opt/cassandra/bin/recovery.sh
 fi

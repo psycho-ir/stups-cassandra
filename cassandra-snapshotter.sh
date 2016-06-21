@@ -49,15 +49,6 @@ if [ "$commando" == "backup" ]; then
 		aws s3 cp /opt/recovery/meta/$keySpaceName-$DATE.cql s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName.cql
        	rm -rfv /opt/recovery/meta/$keySpaceName-$DATE.cql
 
-		# echo "Get tokens"
-  #       mkdir -p /opt/recovery/meta
-  #       $CASSANDRA_HOME/bin/nodetool -h $LISTEN_ADDRESS ring | grep $IP | awk '{print $NF ","}' | xargs > /opt/recovery/meta/tokens-$DATE.list
-  #       aws s3 cp /opt/recovery/meta/tokens-$DATE.list s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/tokens.list
-  #       rm -rfv /opt/recovery/meta/tokens-$DATE.list
-
-  #       echo "Creating snapshot for keyspace $keySpaceName"
-  #       $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS flush $keySpaceName
-  #       $CASSANDRA_HOME/bin/nodetool  -h $LISTEN_ADDRESS snapshot $keySpaceName
 
         echo "Moving file to S3 Bucket $bucket"
         for table_dir in `ls -d $backupFolder/*`;
@@ -66,8 +57,6 @@ if [ "$commando" == "backup" ]; then
             aws s3 cp $table_dir/snapshots/$snaphshot_dir s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName/$table_name --recursive
         done
 
-   #      echo "Moving file to S3 Bucket $bucket"
- 		# aws s3 cp /var/cassandra/data/$keySpaceName s3://$bucket/$APPLICATION_ID-snapshot/$DATE/$IP/$keySpaceName --recursive
 
         echo "Cleanup"
  		rm -rfv $backupFolder/*/snapshots/*

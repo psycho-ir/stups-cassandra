@@ -59,7 +59,6 @@ if [ $my_order -le $snapshot_count ]; then
 	do
 	    cout=`$CASSANDRA_HOME/bin/cqlsh $LISTEN_ADDRESS -f $cql_file 2>&1`
 	    exists=`echo $cout | grep already | wc -l`
-	    # cout=`cqlsh $LISTEN_ADDRESS -f $SCHEMA_DEFINITION`
 	    result_status=$?
 	    echo $result_status:$cout
 	    count=0
@@ -75,42 +74,31 @@ if [ $my_order -le $snapshot_count ]; then
 	        echo $result_status:$cout
 	    done
 	done
-	for keyspace_dir in `ls -d $node_folder/*/`;
-	do
-		keyspace_name=`echo $keyspace_dir | grep -o "[^\/]*\/$"`
-		keyspace_name=${keyspace_name:0:-1} # remove last slash
-		for snapshot_dir in `ls -d $node_folder/$keyspace_name/*/`;
-		do	
-			
-			sstableloader -d $LISTEN_ADDRESS $snapshot_dir
-			
-			# Old recovery with upgrading sstables from C* ver. 2 to ver. 3
-			# TODO: remove after a bit more testing
+	# Restore sstables one-by-one
+	while true; do
+	    curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/sstableLock?prevExist=false" \
+	        -XPUT -d value=${LISTEN_ADDRESS} > /dev/null
+	    if [ $? -eq 0 ] ;
+	    then
+			for keyspace_dir in `ls -d $node_folder/*/`;
+			do
+				keyspace_name=`echo $keyspace_dir | grep -o "[^\/]*\/$"`
+				keyspace_name=${keyspace_name:0:-1} # remove last slash
+				for snapshot_dir in `ls -d $node_folder/$keyspace_name/*/`;
+				do	
+					sstableloader -d $LISTEN_ADDRESS $snapshot_dir
+					echo "---"
+				done
+			done
 
-			# snapshot_name=`echo $snapshot_dir | grep -o "[^\/]*\/$"`
-			# snapshot_name=${snapshot_name:0:-1}
-			# table_name=`echo $snapshot_name | grep -o "[^-]*-"`
-			# table_name=${table_name:0:-1}
-			# mkdir $node_folder/$keyspace_name/$table_name
-			# mv $snapshot_dir/* $node_folder/$keyspace_name/$table_name/
-			# sstableloader -d $LISTEN_ADDRESS $node_folder/$keyspace_name/$table_name/
-
-			# cass_table=`ls -d "/var/cassandra/data/$keyspace_name/$table_name"* | grep -o "[^\/]*$"` 
-			# echo "mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots"
-			# mkdir -p /var/cassandra/data/$keyspace_name/$cass_table/snapshots
-			# echo "cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R"
-			# cp $snapshot_dir /var/cassandra/data/$keyspace_name/$cass_table/snapshots -R
-			# echo "sstableupgrade $keyspace_name $table_name $snapshot_name"
-			# sstableupgrade $keyspace_name $table_name $snapshot_name
-			# echo "mkdir -p $node_folder/upgrade/$keyspace_name/$table_name"
-			# mkdir -p $node_folder/upgrade/$keyspace_name/$table_name
-			# echo "cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R"
-			# cp /var/cassandra/data/$keyspace_name/$cass_table/snapshots/$snapshot_name/* $node_folder/upgrade/$keyspace_name/$table_name -R
-			# echo "sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name"
-			# sstableloader -d $LISTEN_ADDRESS $node_folder/upgrade/$keyspace_name/$table_name
-			echo "---"
-		done
+			nodetool -h $LISTEN_ADDRESS repair
+	        out=$(curl -Lsf ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/sstableLock?prevValue=${LISTEN_ADDRESS} \
+	            -XDELETE)
+	        echo "$out"
+	        break
+	    else
+	        echo "Failed to acquire recovery lock. Waiting for 60 seconds ..."
+	        sleep 60
+	    fi
 	done
-
-	nodetool -h $LISTEN_ADDRESS repair
 fi

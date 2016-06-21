@@ -16,7 +16,6 @@ while [ -n "$BACKUP_BUCKET" ] ; do
                                 if [[ "${EXECUTE_PATTERN[1]}" == "?" || "${EXECUTE_PATTERN[1]}" == "$HOUR" ]] ; then
                                 #Execute the actual script for taking a snapshot                              
                                 snapshot_dir=`nodetool snapshot | tail -1| grep -o "[0-9]*"`
-                                echo "snapshot_dir=$snapshot_dir"
                                 for i in "${KEYSPACES[@]}"
                                         do
                                         echo "Executing snapshot"
