@@ -117,7 +117,7 @@ python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassand
 
 
 echo "Starting Cassandra ..."
-/opt/cassandra/bin/cassandra \
+${CASSANDRA_HOME}/bin/cassandra \
     -R \
     -Dcassandra.logdir=/var/cassandra/log \
     -Dcassandra.cluster_name=${CLUSTER_NAME} \
