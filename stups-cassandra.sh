@@ -8,7 +8,6 @@
 #nodetool status | tail -n +6 | tee | awk '{print $1$2;}'
 set -x
 
-export CASSANDRA_HOME=/opt/cassandra
 export CASSANDRA_INCLUDE=${CASSANDRA_HOME}/bin/cassandra.in.sh
 
 # sed -i '' 's/^dc_suffix=.*/dc_suffix=DC666/' cassandra-rackdc_template.properties # use this line when executing on a Mac!
@@ -72,11 +71,6 @@ then
     export SNITCH="Ec2Snitch"
 fi
 
-if [ -z "$OPSCENTER" ] ;
-then
-    export OPSCENTER=$(curl -Ls -m 4 ${ETCD_URL}/v2/keys/cassandra/opscenter | jq -r '.node.value')
-fi
-
 export DATA_DIR=${DATA_DIR:-/var/cassandra/data}
 export COMMIT_LOG_DIR=${COMMIT_LOG_DIR:-/var/cassandra/data/commit_logs}
 
@@ -95,7 +89,7 @@ while true; do
     then
         echo "Acquired bootstrap lock. Setting up node ..."
         # SEED_COUNT=$(curl -Ls ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | jq '.node.nodes | length')
-        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
+        SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '.node.nodes '| grep -c ${DCSUFFIX})
 	# registering new node as seed: if seeds still needed and NOT a replacement node
         if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
         then
@@ -106,22 +100,6 @@ while true; do
            fi
 	    fi
 
-        # Register the cluster with OpsCenter if there's already at least 1 seed node
-        if [ -n $OPSCENTER -a $SEED_COUNT_IN_VDC -gt 0 ] ;
-        then
-            curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/opscenter_ip?prevExist=false" \
-                -XPUT -d value=${OPSCENTER} > /dev/null
-            if [ $? -eq 0 ] ;
-            then
-                # First seed node is fine, it should allow opscenter to discover the rest
-                SEED=$(curl -sL ${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds | \
-                    jq -r '.node.nodes[0].value')
-                echo "Registering cluster with OpsCenter $OPSCENTER using seed $SEED ..."
-                PAYLOAD="{\"cassandra\":{\"seed_hosts\":\"$SEED\"},\"cassandra_metrics\":{},\"jmx\":{\"port\":\"7199\"}}"
-                curl -ksL http://${OPSCENTER}:8888/cluster-configs -X POST -d $PAYLOAD > /dev/null
-            fi
-        fi
-
         break
     else
         echo "Failed to acquire boostrap lock. Waiting for 5 seconds ..."
@@ -131,16 +109,6 @@ done
 
 echo "Finished bootstrapping node."
 # Add route 53record seed1.${CLUSTER_NAME}.domain.tld ?
-
-if [ -n "$OPSCENTER" ] ;
-then
-    echo "Configuring OpsCenter agent ..."
-    echo "stomp_interface: $OPSCENTER" >> /var/lib/datastax-agent/conf/address.yaml
-    echo "hosts: [\"$LISTEN_ADDRESS\"]" >> /var/lib/datastax-agent/conf/address.yaml
-    echo "cassandra_conf: /opt/cassandra/conf/cassandra.yaml" >> /var/lib/datastax-agent/conf/address.yaml
-    echo "Starting OpsCenter agent in the background ..."
-    service datastax-agent start > /dev/null
-fi
 
 echo "Generating configuration from template ..."
 python -c "import os; print os.path.expandvars(open('/opt/cassandra/conf/cassandra_template.yaml').read())" > /opt/cassandra/conf/cassandra.yaml
@@ -161,5 +129,4 @@ echo "Starting Cassandra ..."
 if [ "$RECOVERY" -eq 1 ] ;
 then
 	/opt/cassandra/bin/recovery.sh
-  
 fi

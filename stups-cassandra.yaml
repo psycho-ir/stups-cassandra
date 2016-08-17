@@ -3,16 +3,13 @@ SenzaInfo:
   Parameters:
     - EtcdDomain:
         Description: "Your etcd domain (e.g. etcd.cassandra.rocks.org)"
-        Default: release.octopus.zalan.do
+        Default: r1.octopus.zalan.do
     - ClusterSize:
         Description: "The initial size (number of nodes) for the new Cassandra cluster"
         Default: "4"
     - ImageVersion:
         Description: "Which Image version to use (e.g. 2.1.8-p0)"
-        Default: "1.0-SNAPSHOT"
-    - OpsCenterIp:
-        Description: "Register to Opscenter using Ip address"
-        Default: ""
+        Default: "1.0.5"
     - ScalyrKey:
         Description: "The API key of Scalyr logging service used by Taupage"
         Default: ""
@@ -24,19 +21,19 @@ SenzaInfo:
         Default: "cassandra-release-backup"
     - Recovery:
         Description: "If cassandra cluster shall recover from snapshot"
-        Default: "0"
+        Default: "1"
     - RecoverySnapshot:
         Description: "Timestamp of snapshot to recover from"
-        Default: "2016-02-17:07"
+        Default: "2016-06-09:08"
     - TTL:
         Description: "Lock TTL"
         Default: 30
     - DCSuffix:
         Description: "DC_Suffix in cassandra rackdc file"
-        Default: "DC3"
+        Default: "DC2"
     - ClusterName:
         Description: "Name of the cluster"
-        Default: "RELEASECLUSTER"
+        Default: "C36"
 
 SenzaComponents:
 
@@ -58,6 +55,7 @@ SenzaComponents:
         DesiredCapacity: "{{Arguments.ClusterSize}}"
         MetricType: CPU
       TaupageConfig:
+        appdynamics_application: "A B Testing and Personalization"
         root: true
         runtime: Docker
         networking: host
@@ -66,14 +64,12 @@ SenzaComponents:
         etcd_discovery_domain: "{{Arguments.EtcdDomain}}"
         scalyr_account_key: "{{Arguments.ScalyrKey}}"
         mint_bucket: "zalando-stups-mint-268094141749-eu-west-1"
-        # http://docs.datastax.com/en/opscenter/5.0/opsc/reference/opscPorts_r.html
         ports:
           7000: 7000
           7199: 7199
           8778: 8778
           9042: 9042
           9160: 9160
-          61621: 61621
         volumes:
           raid:
             /dev/md/cassandra:
@@ -92,7 +88,6 @@ SenzaComponents:
         environment:
           CLUSTER_NAME: "{{Arguments.ClusterName}}"
           CLUSTER_SIZE: "{{Arguments.ClusterSize}}"
-          OPSCENTER: "{{Arguments.OpsCenterIp}}"
           TTL: "{{Arguments.TTL}}"
           APPLICATION_ID: "{{Arguments.ApplicationId}}"
           BACKUP_BUCKET: "{{Arguments.BackupBucket}}"
@@ -126,10 +121,6 @@ Resources:
       - IpProtocol: tcp #Jolokia Agent
         FromPort: 8778
         ToPort: 8778
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp # Agent receiving traffic from OpsCenter
-        FromPort: 61621
-        ToPort: 61621
         CidrIp: 0.0.0.0/0
       - IpProtocol: tcp # SSH
         FromPort: 22

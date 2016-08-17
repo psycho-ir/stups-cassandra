@@ -1,23 +1,23 @@
-FROM zalando/openjdk:8u45-b14-3
+FROM registry.opensource.zalan.do/stups/openjdk:8u91-b14-1-22
 
 MAINTAINER Zalando <team-mop@zalando.de>
 
 # Storage Port, JMX, Jolokia Agent, Thrift, CQL Native, OpsCenter Agent
 # Left out: SSL
-EXPOSE 7000 7199 8778 9042 9160 61621
+EXPOSE 7000 7199 8778 9042 9160
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://debian.datastax.com/community stable main" | tee -a /etc/apt/sources.list.d/datastax.community.list
 RUN curl -sL https://debian.datastax.com/debian/repo_key | apt-key add -
 RUN apt-get -y update && apt-get -y -o Dpkg::Options::='--force-confold' --fix-missing dist-upgrade
-RUN apt-get -y install curl python wget jq datastax-agent sysstat python-pip supervisor && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get -y install curl python wget jq sysstat python-pip supervisor && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Needed for transferring snapshots
 RUN pip install awscli
 
-ENV CASSIE_VERSION=3.3
+ENV CASSIE_VERSION=3.6
 #ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
-ADD http://ftp.fau.de/apache/cassandra/3.3/apache-cassandra-3.3-bin.tar.gz /tmp/
+ADD http://ftp.fau.de/apache/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
 #RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 #RUN md5sum --check /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
 
@@ -61,9 +61,14 @@ RUN mkdir -p /var/log/supervisor && chmod 0777 /var/log/supervisor
 RUN touch /var/log/snapshot_cron.log && chmod 0777 /var/log/snapshot_cron.log
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY scm-source.json /scm-source.json
 
 RUN mkdir -p /opt/recovery
-RUN export PATH=/opt/apache-cassandra-3.3/bin:$PATH
-RUN export CASSANDRA_HOME=/opt/apache-cassandra-3.3
+ENV CASSANDRA_HOME=/opt/apache-cassandra-${CASSIE_VERSION}
+ENV PATH=${CASSANDRA_HOME}/bin:$PATH
+
+RUN echo 'deb mirror://mirrors.ubuntu.com/mirrors.txt precise main restricted universe multiverse' >> /etc/apt/sources.list
+RUN apt-get update
+RUN apt-get install -y vim --allow-unauthenticated
 
 CMD ["/usr/bin/supervisord"]
