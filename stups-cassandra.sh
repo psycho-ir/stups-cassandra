@@ -128,5 +128,5 @@ ${CASSANDRA_HOME}/bin/cassandra \
 
 if [ "$RECOVERY" -eq 1 ] ;
 then
-	/opt/cassandra/bin/recovery.sh
+	${CASSANDRA_HOME}/bin/recovery.sh
 fi

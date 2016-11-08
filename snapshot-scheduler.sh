@@ -12,6 +12,7 @@ while [ -n "$BACKUP_BUCKET" ] ; do
                 #Remove cassandra default keyspaces
                 KEYSPACES=("${KEYSPACES[@]/system_traces}")
                 KEYSPACES=("${KEYSPACES[@]/system}")
+                KEYSPACES=("${KEYSPACES[@]/kairosdb_metrics}")
                         if  [[ "${EXECUTE_PATTERN[0]}" == "?" || "${EXECUTE_PATTERN[0]}" == "$MINUTE" ]] ; then
                                 if [[ "${EXECUTE_PATTERN[1]}" == "?" || "${EXECUTE_PATTERN[1]}" == "$HOUR" ]] ; then
                                 #Execute the actual script for taking a snapshot                              
