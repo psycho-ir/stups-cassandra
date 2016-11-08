@@ -5,7 +5,6 @@ set -x
 
 while true; do
     HOUR=$(date +%H)
-    set -x
     DAY=`date +%d`
     DAY_EXPR=`expr $DAY + 0`
     # RUN repair every 2nd day once at night
