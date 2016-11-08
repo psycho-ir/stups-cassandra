@@ -12,7 +12,8 @@ while true; do
     if  [ $(($DAY_EXPR % 2)) == 0 ] ; then
         if  [ "03" == "$HOUR" ] ; then
             /opt/cassandra/bin/nodetool repair -pr
-            `sleep 2d`
+            # sleep one and a half day
+            `sleep 36h` 
         fi
     fi
     `sleep 45m`
