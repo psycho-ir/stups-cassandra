@@ -9,7 +9,7 @@ while true; do
     DAY_EXPR=`expr $DAY + 0`
     # RUN repair every 2nd day once at night
     if  [ $(($DAY_EXPR % 2)) == 0 ] ; then
-        if  [ "13" == "$HOUR" ] ; then
+        if  [ "03" == "$HOUR" ] ; then
             while true; do
                 curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/repairLock?prevExist=false" \
                     -XPUT -d value=${LISTEN_ADDRESS} > /dev/null
