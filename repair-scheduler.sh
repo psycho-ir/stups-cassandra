@@ -22,7 +22,7 @@ while true; do
                     echo "$out"
                     break
                 else
-                    echo "Failed to acquire repair lock. Waiting for 60 seconds ..."
+                    echo "Failed to acquire repair lock. Waiting for 5 minutes ..."
                     sleep 5m
                 fi
             done
