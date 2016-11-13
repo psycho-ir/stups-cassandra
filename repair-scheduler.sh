@@ -23,7 +23,7 @@ while true; do
                     break
                 else
                     echo "Failed to acquire repair lock. Waiting for 60 seconds ..."
-                    sleep 10s
+                    sleep 5m
                 fi
             done
             sleep 36h
