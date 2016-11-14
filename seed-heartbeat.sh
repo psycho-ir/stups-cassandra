@@ -55,11 +55,11 @@ while true ; do
        # check if missing seeds 
        if [ -z "$SEED_ADDR" ] ;
        then
-           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -c ${DCSUFFIX})
+           SEED_COUNT_IN_VDC=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq -r '.node.nodes '| grep -c ${DCSUFFIX})
            if [ $SEED_COUNT_IN_VDC -lt $NEEDED_SEEDS ];
            then
                   #check if no seed in availability zone and DC!
-                  SEED_FOR_ZONE=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq '. node.nodes '| grep -cE ${NODE_ZONE}.*${DCSUFFIX})
+                  SEED_FOR_ZONE=$(curl -Lsf "${ETCD_URL}/v2/keys/cassandra/${CLUSTER_NAME}/seeds" | jq -r '.node.nodes '| grep -cE ${NODE_ZONE}.*${DCSUFFIX})
                   if [ "$SEED_FOR_ZONE" -eq 0 ]
 		              then
                          # check if node in UN state (and can become seed)

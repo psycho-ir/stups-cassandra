@@ -15,7 +15,7 @@ RUN apt-get -y install curl python wget jq sysstat python-pip supervisor && apt-
 # Needed for transferring snapshots
 RUN pip install awscli
 
-ENV CASSIE_VERSION=3.6
+ENV CASSIE_VERSION=3.8
 #ADD http://archive.apache.org/dist/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
 ADD http://ftp.fau.de/apache/cassandra/${CASSIE_VERSION}/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz /tmp/
 #RUN echo "cb77a8e3792a7e8551af6602ac5f11df /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz" > /tmp/apache-cassandra-${CASSIE_VERSION}-bin.tar.gz.md5
@@ -48,6 +48,7 @@ ADD cassandra-etcd-seed-provider-1.1.1.jar /opt/cassandra/lib/
 
 COPY cassandra-snapshotter.sh /opt/cassandra/bin/cassandra-snapshotter.sh
 COPY snapshot-scheduler.sh /opt/cassandra/bin/snapshot-scheduler.sh
+COPY repair-scheduler.sh /opt/cassandra/bin/repair-scheduler.sh
 COPY seed-heartbeat.sh /opt/cassandra/bin/seed-heartbeat.sh
 
 RUN chmod 0777 /opt/cassandra/bin/cassandra-snapshotter.sh && chmod 0777  /opt/cassandra/bin/snapshot-scheduler.sh && chmod 0777 /opt/cassandra/bin/seed-heartbeat.sh && chmod 0777 /opt/cassandra/conf/cassandra-env.sh
